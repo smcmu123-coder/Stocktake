@@ -345,7 +345,10 @@ const LIST_META = {
   plasticWallTypes:{label:'Plastic pipe wall types', def:['Smooth','Twinwall']},
   pipeLengths:{label:'Standard pipe lengths', unit:'m', numeric:true, decimal:true, def:[1,1.6,2,2.5,3,6]},
   bendAngles:{label:'Bend angles', unit:'°', numeric:true, decimal:true, def:[15,30,45,90]},
+  bendFittings:{label:'Bend section fitting types', def:['Bend','Straight Collar']},
   bendMaterials:{label:'Bend materials / types', def:['Concrete','Plastic','Clay','Other']},
+  junctionTypes:{label:'Junction types', def:['Y Junction','T Junction']},
+  junctionMaterials:{label:'Junction materials / types', def:['Concrete','Plastic','Clay','Other']},
   sealTypes:{label:'Seal types', def:['Pipe joint seal','Manhole connector seal','Other']},
   entryConfigs:{label:'Cover slab entry configurations', def:['Single Entry','Double Entry']},
   slabTypes:{label:'Cover slab types / specifications', def:['Standard duty','Heavy duty','Reducing slab','Other']},
@@ -364,10 +367,16 @@ const CATS = [
     {key:'material', label:'Pipe Material / Type', list:'pipeMaterials', col:'material'},
     {key:'wall', label:'Plastic Wall Type', list:'plasticWallTypes', col:'wall', showIf:s=>isPlastic(s.material)},
     {key:'length', label:'Pipe Length', list:'pipeLengths', col:'length', optional:true, custom:true}]},
-  {key:'bends', name:'Drainage Bends', singular:'Drainage Bend', add:'Add bend', fields:[
+  {key:'bends', name:'Drainage Bends', singular:'Drainage Bend', add:'Add bend / collar', fields:[
     {key:'diameter', label:'Pipe Diameter', list:'pipeDiameters', col:'diameter'},
-    {key:'angle', label:'Bend Angle', list:'bendAngles', col:'angle'},
+    {key:'fitting', label:'Fitting Type', list:'bendFittings', col:'fitting'},
+    {key:'angle', label:'Bend Angle', list:'bendAngles', col:'angle', showIf:s=>!isCollar(s.fitting)},
     {key:'material', label:'Bend Material / Type', list:'bendMaterials', col:'material', optional:true}]},
+  {key:'junctions', name:'Junctions', singular:'Junction', add:'Add junction', fields:[
+    {key:'diameter', label:'Main Line Pipe Diameter', list:'pipeDiameters', col:'diameter'},
+    {key:'branch', label:'Incoming Pipe Diameter', list:'pipeDiameters', col:'branch'},
+    {key:'type', label:'Junction Type', list:'junctionTypes', col:'fitting'},
+    {key:'material', label:'Junction Material / Type', list:'junctionMaterials', col:'material', optional:true}]},
   {key:'seals', name:'Rubber Seals', singular:'Rubber Seal', add:'Add seal', fields:[
     {key:'diameter', label:'Seal Diameter', list:'pipeDiameters', col:'diameter'},
     {key:'type', label:'Seal Type', list:'sealTypes', col:'material', optional:true}]},
@@ -383,6 +392,7 @@ const CATS = [
 ];
 const CAT = Object.fromEntries(CATS.map(c=>[c.key,c]));
 /* Wall type (smooth / twinwall) only applies to plastic pipe */
+function isCollar(v){ return /collar/i.test(String(v||'')); }
 function isPlastic(v){ return /plastic|pvc|polypropylene|hdpe|\bpp\b/i.test(String(v||'')); }
 
 /* ---------------- Helpers ---------------- */
@@ -408,7 +418,8 @@ function describe(line){
   const parts=[];
   if(c==='manholes'){ parts.push(fmtVal('manholeDiameters',s.diameter)+' dia', fmtVal('manholeHeights',s.height)+' height'); }
   else if(c==='pipework'){ parts.push(fmtVal('pipeDiameters',s.diameter)+' dia'); if(s.material) parts.push(s.material+(s.wall&&isPlastic(s.material)?' ('+s.wall+')':'')); if(s.length!==''&&s.length!=null) parts.push(fmtVal('pipeLengths',s.length)+' lengths'); }
-  else if(c==='bends'){ parts.push(fmtVal('pipeDiameters',s.diameter)+' dia', fmtVal('bendAngles',s.angle)); if(s.material) parts.push(s.material); }
+  else if(c==='bends'){ parts.push(fmtVal('pipeDiameters',s.diameter)+' dia'); if(isCollar(s.fitting)) parts.push('Straight collar'); else parts.push(fmtVal('bendAngles',s.angle)+' bend'); if(s.material) parts.push(s.material); }
+  else if(c==='junctions'){ parts.push(fmtVal('pipeDiameters',s.diameter)+' main × '+fmtVal('pipeDiameters',s.branch)+' incoming', s.type); if(s.material) parts.push(s.material); }
   else if(c==='seals'){ parts.push(fmtVal('pipeDiameters',s.diameter)+' dia'); if(s.type) parts.push(s.type); }
   else if(c==='slabs'){ parts.push('For '+fmtVal('manholeDiameters',s.diameter)+' manhole', s.entry); if(s.type) parts.push(s.type); }
   else if(c==='lids'){ parts.push(s.load, s.opener); if(s.diameter!==''&&s.diameter!=null) parts.push('for '+fmtVal('manholeDiameters',s.diameter)+' manhole'); if(s.type) parts.push(s.type); }
@@ -446,7 +457,10 @@ function sampleStocktake(){
     L('manholes',{diameter:1200,height:500},1,'Damaged','Cracked joint, supplier notified'),
     L('pipework',{diameter:150,material:'Plastic',wall:'Twinwall',length:6},24),
     L('pipework',{diameter:225,material:'Concrete',length:2.5},12),
-    L('bends',{diameter:150,angle:45,material:'Plastic'},12),
+    L('bends',{diameter:150,fitting:'Bend',angle:45,material:'Plastic'},12),
+    L('bends',{diameter:150,fitting:'Straight Collar',angle:'',material:'Plastic'},10),
+    L('junctions',{diameter:225,branch:150,type:'Y Junction',material:'Plastic'},6),
+    L('junctions',{diameter:150,branch:150,type:'T Junction',material:'Clay'},2),
     L('seals',{diameter:225,type:'Pipe joint seal'},20),
     L('slabs',{diameter:1500,entry:'Double Entry',type:'Standard duty'},3),
     L('lids',{load:'D400',opener:'Double Opener',diameter:1500,type:'Solid top'},4,'Quarantined','Awaiting check against road layout')
@@ -466,6 +480,7 @@ function migrate(d){
   for(const id in d.stocktakes){
     const st=d.stocktakes[id];
     st.details=Object.assign(blankStocktake().details, st.details||{});
+    (st.lines||[]).forEach(l=>{ if(l&&l.cat==='bends'&&l.spec&&!l.spec.fitting) l.spec.fitting='Bend'; });
     st.lines=(st.lines||[]).filter(l=>l&&CAT[l.cat]).map(l=>({id:l.id||uid(), cat:l.cat, spec:l.spec||{}, qty:Math.max(0,parseInt(l.qty,10)||0), condition:CONDITIONS.includes(l.condition)?l.condition:'Good', notes:l.notes||'', created:l.created||Date.now()}));
   }
   if(!d.stocktakes[d.currentId]){ const ids=Object.keys(d.stocktakes); if(ids.length) d.currentId=ids[0]; else { const st=blankStocktake(); d.stocktakes[st.id]=st; d.currentId=st.id; } }
@@ -560,7 +575,7 @@ function renderFilterOptions(){
 function lineMatches(l){
   if(filters.cat && l.cat!==filters.cat) return false;
   if(filters.cond && l.condition!==filters.cond) return false;
-  if(filters.dia && String(l.spec.diameter)!==filters.dia) return false;
+  if(filters.dia && String(l.spec.diameter)!==filters.dia && String(l.spec.branch??'')!==filters.dia) return false;
   if(filters.q){
     const hay=(CAT[l.cat].name+' '+CAT[l.cat].singular+' '+describe(l)+' '+Object.values(l.spec).join(' ')+' '+l.condition+' '+l.notes).toLowerCase();
     return filters.q.toLowerCase().split(/\s+/).filter(Boolean).every(t=>hay.includes(t));
@@ -798,6 +813,8 @@ function openLineDialog(catKey, {line=null, prefill=null}={}){
       if(v==='' && !f.optional && !loose){ const e=$('#lf-'+f.key+'-err'); e.textContent='Choose a '+f.label.toLowerCase()+'.'; e.hidden=false; ok=false; }
       out[f.key]=v;
     });
+    if(!loose && catKey==='junctions' && out.branch!=='' && out.diameter!=='' && Number(out.branch)>Number(out.diameter)){
+      const e=$('#lf-branch-err'); e.textContent='The incoming pipe is bigger than the main line. Check the two sizes.'; e.hidden=false; ok=false; }
     return loose? out : (ok? out : null);
   }
   $('#lf-save').onclick=()=>{
@@ -1075,14 +1092,14 @@ function brandHead(sh, title, logo, company, infoLine){
 /* Full register columns: key, header, width, kind */
 const REG = [
   ['no','No.',6,'int'],['project','Project Name',24,'text'],['ref','Stocktake Reference',16,'text'],['date','Stocktake Date',13,'date'],
-  ['cat','Material Category',16,'text'],['desc','Material Description',42,'text'],['diameter','Diameter (mm)',11,'int'],['height','Height (mm)',10,'int'],
-  ['angle','Bend Angle (°)',10,'text'],['entry','Entry Configuration',14,'text'],['load','Load Rating',10,'text'],['opener','Opener Configuration',15,'text'],
+  ['cat','Material Category',16,'text'],['desc','Material Description',42,'text'],['diameter','Diameter (mm)',11,'int'],['branch','Incoming Pipe Dia (mm)',12,'int'],['height','Height (mm)',10,'int'],
+  ['angle','Bend Angle (°)',10,'text'],['fitting','Fitting Type',15,'text'],['entry','Entry Configuration',14,'text'],['load','Load Rating',10,'text'],['opener','Opener Configuration',15,'text'],
   ['material','Material / Type',20,'text'],['wall','Plastic Wall Type',12,'text'],['length','Pipe Length (m)',10,'dec'],['qty','Quantity on Site',10,'int'],['lm','Total Linear Metres (m)',12,'dec'],
   ['cond','Condition',13,'text'],['notes','Notes',40,'text']
 ];
 const FIELD_HEAD = {diameter:'Diameter (mm)', height:'Height (mm)', angle:'Bend Angle (°)', entry:'Entry Configuration', load:'Load Rating', opener:'Opener Configuration', length:'Pipe Length (m)'};
-const FIELD_KIND = {diameter:'int', height:'int', angle:'text', length:'dec'};
-const FIELD_NUM = {diameter:1, height:1, angle:1, length:1};
+const FIELD_KIND = {diameter:'int', branch:'int', height:'int', angle:'text', length:'dec'};
+const FIELD_NUM = {diameter:1, branch:1, height:1, angle:1, length:1};
 function cellStyle(kind, cond){ const base= cond==='Damaged'? S.dmg : cond==='Quarantined'? S.qtn : S.data; return base+VARIANT[kind]; }
 function numOrBlank(v){ if(v===''||v==null) return ''; const n=Number(v); return isFinite(n)? n : String(v); }
 
@@ -1174,7 +1191,7 @@ function buildWorkbookParts(st, settings, logo){
   const catSheets=CATS.map(c=>{
     const sh=newSheet(c.name); sh.footer=footer; sh.footerRight=footerRight;
     const cols=[['no','No.',6,'int'],['desc','Material Description',42,'text']];
-    c.fields.forEach(f=>cols.push([f.key, (f.col==='diameter'&&/Manhole/.test(f.label))? 'Manhole Diameter (mm)' : (FIELD_HEAD[f.col]||f.label), FIELD_NUM[f.col]?12:Math.max(16,f.label.length+2), FIELD_KIND[f.col]||'text', f.col]));
+    c.fields.forEach(f=>cols.push([f.key, (LIST_META[f.list].unit? f.label+' ('+LIST_META[f.list].unit+')' : f.label), FIELD_NUM[f.col]?12:Math.max(16,f.label.length+2), FIELD_KIND[f.col]||'text', f.col]));
     cols.push(['qty','Quantity on Site',11,'int']);
     if(c.key==='pipework') cols.push(['lm','Total Linear Metres (m)',13,'dec']);
     cols.push(['cond','Condition',13,'text'],['notes','Notes',40,'text']);
@@ -1212,7 +1229,8 @@ function buildWorkbookParts(st, settings, logo){
 const SIZE_DEFS = [
   {cat:'manholes', title:'Manholes by diameter and height', rowKey:'diameter', rowHead:'Manhole Diameter', colKeys:['height'], colLabel:v=>v[0]===''?'Height not recorded':fmtVal('manholeHeights',v[0])+' high'},
   {cat:'pipework', title:'Pipework by diameter and material', rowKey:'diameter', rowHead:'Pipe Diameter', colKeys:['material','wall'], colLabel:v=>v[0]? v[0]+(v[1]?' ('+v[1]+')':'') : 'Material not recorded', lm:true, unitNote:'Quantities are numbers of pipes'},
-  {cat:'bends', title:'Drainage bends by diameter and angle', rowKey:'diameter', rowHead:'Bend Diameter', colKeys:['angle'], colLabel:v=>v[0]===''?'Angle not recorded':fmtVal('bendAngles',v[0])},
+  {cat:'bends', title:'Drainage bends and collars by diameter', rowKey:'diameter', rowHead:'Pipe Diameter', colKeys:['fitting','angle'], colLabel:v=>isCollar(v[0])? 'Straight collar' : (v[1]===''?'Bend, angle not recorded':fmtVal('bendAngles',v[1])+' bend')},
+  {cat:'junctions', title:'Junctions by main line and incoming diameter', rowKey:'diameter', rowHead:'Main Line Diameter', colKeys:['branch','type'], colLabel:v=>(v[0]===''?'Incoming not recorded':v[0]+' mm incoming')+(v[1]?' · '+v[1]:'')},
   {cat:'seals', title:'Rubber seals by diameter and type', rowKey:'diameter', rowHead:'Seal Diameter', colKeys:['type'], colLabel:v=>v[0]||'Type not specified'},
   {cat:'slabs', title:'Cover slabs by manhole diameter and entry', rowKey:'diameter', rowHead:'Manhole Diameter', colKeys:['entry'], colLabel:v=>v[0]||'Entry not recorded'},
   {cat:'lids', title:'Manhole lids by manhole diameter and rating', rowKey:'diameter', rowHead:'Manhole Diameter', colKeys:['load','opener'], colLabel:v=>v.filter(Boolean).join(' · ')||'Not specified'}
