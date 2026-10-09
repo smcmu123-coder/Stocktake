@@ -1,0 +1,1297 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1F5A2D">
+<meta name="description" content="Cheltenham Green Civils drainage materials stocktake">
+<link rel="icon" href="logo.png">
+</head>
+<body>
+<title>Drainage Stocktake</title>
+<style>
+/* Layout: CGC system-record look — white header with logo top-left, title top-right, thin green rule; white panels introduced by rounded green section bars; one sans-serif family. Single light theme by design (brand: logo on white only). */
+:root{
+  --green:#1F5A2D; --green-press:#17451F; --pale:#EDF2EE; --grey-green:#D8DFDA; --border:#CBD3CD;
+  --value:#2E6DA4; --ink:#1A1A1A; --muted:#5F6661; --white:#FFFFFF; --page:#F5F7F5;
+  /* functional status colours (condition only) */
+  --warn:#8A5700; --warn-bg:#FFF1CC; --bad:#A6231A; --bad-bg:#FBE1DE; --good:#1F5A2D; --good-bg:#EDF2EE;
+  --focus:#2E6DA4; --overlay:rgba(26,26,26,.55);
+  --font:Calibri,"Segoe UI",Carlito,Arial,sans-serif;
+  --tap:52px; --r:8px;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--page);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+/* Header: logo top-left, title top-right, green rule */
+.topbar{background:var(--white)}
+.topbar-in{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:12px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.logo-wrap{display:flex;align-items:center;min-height:56px;flex:none}
+.logo-wrap img{height:56px;width:auto;display:block}
+.logo-fallback{font-weight:700;font-size:1.05rem;color:var(--ink);line-height:1.15}
+.title-block{text-align:right;min-width:0}
+.title-block h1{margin:0;font-size:1.6rem;font-weight:700;line-height:1.1;color:var(--ink)}
+.doc-ref{font-size:.78rem;color:var(--muted)}
+.rule{height:3px;background:var(--green)}
+.subbar{background:var(--white);border-bottom:1px solid var(--border)}
+.subbar-in{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.brand-sub{font-weight:700;color:var(--value);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 200px}
+.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.save-state{font-size:.85rem;color:var(--muted);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.save-state .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+.save-state[data-state="saving"] .dot{background:var(--value)}
+.save-state[data-state="error"] .dot{background:var(--bad)}
+.btn-top{min-height:44px;padding:0 14px;border-radius:var(--r);border:1px solid var(--border);background:var(--white);color:var(--green);font-weight:700;cursor:pointer}
+.btn-top:hover{background:var(--pale);border-color:var(--green)}
+
+main{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:18px 64px;display:flex;flex-direction:column;gap:16px}
+
+/* Panels with rounded green section bars */
+.panel{background:var(--white);border:1px solid var(--border);border-radius:var(--r)}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 8px 0;padding:9px 14px;border-radius:7px;background:var(--green);color:var(--white);flex-wrap:wrap}
+.panel-h h2{margin:0;font-size:1.02rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.panel-h .hint,.panel-h .dash-meta{color:#DCE7DF}
+.panel-h .dash-meta b{color:var(--white)}
+.panel-b{padding:16px}
+.btn{min-height:var(--tap);padding:0 18px;border-radius:var(--r);border:1px solid var(--border);background:var(--white);color:var(--green);font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-align:center}
+.btn:hover{background:var(--pale);border-color:var(--green)}
+.btn-primary,.btn-dark{background:var(--green);border-color:var(--green);color:var(--white)}
+.btn-primary:hover,.btn-dark:hover{background:var(--green-press);border-color:var(--green-press)}
+.btn-danger{color:var(--bad);border-color:var(--border)}
+.btn-danger:hover{background:var(--bad-bg);border-color:var(--bad)}
+.btn-sm{min-height:44px;padding:0 12px;font-size:.95rem}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.sample-banner{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px 16px;border-radius:var(--r);background:var(--warn-bg);border:1px solid var(--warn);color:var(--ink)}
+.sample-banner strong{color:var(--warn)}
+
+/* Fields: bold green labels, Value Blue entries */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field label,.flabel{font-size:.9rem;font-weight:700;color:var(--green)}
+.field.wide{grid-column:1/-1}
+.inp{min-height:var(--tap);width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:6px;background:var(--white);color:var(--value);font-size:1.02rem}
+.inp::placeholder{color:#8C948E}
+textarea.inp{min-height:84px;resize:vertical}
+select.inp{appearance:none;-webkit-appearance:none;padding-right:38px;background-image:linear-gradient(45deg,transparent 50%,var(--green) 50%),linear-gradient(135deg,var(--green) 50%,transparent 50%);background-position:calc(100% - 20px) 50%,calc(100% - 14px) 50%;background-size:6px 6px;background-repeat:no-repeat;cursor:pointer}
+.inp:focus{border-color:var(--green);outline:2px solid var(--pale)}
+.hint{font-size:.85rem;color:var(--muted);font-weight:400}
+.err{font-size:.88rem;color:var(--bad);font-weight:700}
+
+/* Summary */
+.dash-meta{font-size:.92rem}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{padding:12px 14px;border-radius:6px;background:var(--pale);border:1px solid var(--border);display:flex;flex-direction:column;gap:2px}
+.tile .v{font-size:2.1rem;font-weight:700;line-height:1;color:var(--value)}
+.tile .k{font-size:.88rem;color:var(--green);font-weight:700}
+.tile.t-warn{background:var(--warn-bg);border-color:var(--warn)} .tile.t-warn .v{color:var(--warn)}
+.tile.t-bad{background:var(--bad-bg);border-color:var(--bad)} .tile.t-bad .v{color:var(--bad)}
+.tbl-wrap{overflow-x:auto;margin-top:14px}
+table.sum{width:100%;border-collapse:collapse;font-size:.98rem;min-width:420px}
+table.sum th,table.sum td{padding:8px 12px;border:1px solid var(--border);text-align:left}
+table.sum th{font-weight:700;background:var(--pale);color:var(--ink)}
+table.sum td.r,table.sum th.r{text-align:right}
+table.sum tbody td.r{color:var(--value)}
+table.sum tfoot td{font-weight:700;background:var(--grey-green);border-top:1px solid var(--green)}
+.bar{display:inline-block;height:8px;border-radius:4px;background:var(--green);opacity:.35;vertical-align:middle;margin-right:8px}
+
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.actions .btn-primary{min-height:60px;font-size:1.12rem;padding:0 24px;flex:1 1 280px}
+.actions .btn{flex:0 1 auto}
+
+/* Filters */
+.filters{display:grid;grid-template-columns:minmax(200px,2fr) repeat(3,minmax(140px,1fr)) auto;gap:10px;align-items:end}
+.filter-count{font-size:.92rem;color:var(--muted);margin-top:10px}
+.jump{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-top:12px}
+.chip{flex:none;min-height:40px;padding:0 12px;border-radius:20px;border:1px solid var(--border);background:var(--white);color:var(--green);font-weight:700;font-size:.92rem;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.chip:hover{background:var(--pale)}
+.chip .c{font-size:.82rem;color:var(--value)}
+
+/* Category sections: green rounded bar header */
+.cat{scroll-margin-top:16px}
+.cat-h{display:flex;align-items:center;gap:10px;margin:8px;padding:6px 8px 6px 6px;border-radius:7px;background:var(--green);color:var(--white);flex-wrap:wrap}
+.cat-toggle{flex:1 1 200px;min-height:48px;display:flex;align-items:center;gap:10px;background:none;border:0;cursor:pointer;text-align:left;padding:0 6px;border-radius:6px;color:var(--white)}
+.cat-toggle:focus-visible{outline-color:var(--white)}
+.cat-toggle .chev{width:28px;height:28px;border-radius:6px;background:rgba(255,255,255,.14);display:grid;place-items:center;transition:transform .15s}
+.cat[data-collapsed="true"] .chev{transform:rotate(-90deg)}
+.cat-toggle h2{margin:0;font-size:1.08rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.cat-stats{display:flex;gap:6px;flex-wrap:wrap}
+.badge{font-size:.82rem;font-weight:700;padding:3px 9px;border-radius:12px;background:rgba(255,255,255,.14);color:var(--white);white-space:nowrap}
+.badge.strong{background:var(--white);color:var(--green)}
+.st-item .badge{background:var(--pale);color:var(--green);border:1px solid var(--border)}
+.st-item .badge.strong{background:var(--green);color:var(--white);border-color:var(--green)}
+.cat-h .btn-dark{background:var(--white);border-color:var(--white);color:var(--green)}
+.cat-h .btn-dark:hover{background:var(--pale);border-color:var(--pale)}
+.cat-b{padding:0 8px 8px}
+.lines{list-style:none;margin:0;padding:0;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.line{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px 16px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);border-left:5px solid transparent;background:var(--white)}
+.line:nth-child(even){background:#FAFCFA}
+.line:last-child{border-bottom:0}
+.line.c-damaged{border-left-color:var(--warn);background:var(--warn-bg)}
+.line.c-quarantined{border-left-color:var(--bad);background:var(--bad-bg)}
+.line-title{font-weight:700;font-size:1.06rem;color:var(--ink)}
+.line-meta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:3px;font-size:.92rem;color:var(--muted)}
+.line-meta .lm{color:var(--value)}
+.pill{font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:2px 8px;border-radius:10px}
+.pill.good{background:var(--good-bg);color:var(--good);border:1px solid var(--border)}
+.pill.damaged{background:var(--white);color:var(--warn);border:1px solid var(--warn)}
+.pill.quarantined{background:var(--white);color:var(--bad);border:1px solid var(--bad)}
+.note{font-style:italic;overflow-wrap:anywhere;color:var(--value)}
+.stepper{display:flex;flex:none;width:max-content;align-items:stretch;border:2px solid var(--green);border-radius:8px;overflow:hidden;background:var(--white)}
+.step{flex:none;width:var(--tap);min-height:var(--tap);border:0;background:var(--pale);color:var(--green);font-size:1.7rem;font-weight:700;cursor:pointer;line-height:1;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+.step:active{background:var(--green);color:var(--white)}
+.step[disabled]{opacity:.35;cursor:not-allowed}
+.qty{flex:none;width:76px;min-width:0;border:0;border-inline:1px solid var(--border);text-align:center;font-size:1.6rem;font-weight:700;color:var(--value);background:var(--white);padding:0 4px}
+.qty:focus{outline:none;background:var(--pale)}
+.line-actions{display:flex;gap:6px}
+.icon-btn{min-height:44px;min-width:44px;padding:0 10px;border-radius:6px;border:1px solid var(--border);background:var(--white);color:var(--green);cursor:pointer;font-size:.92rem;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+.icon-btn:hover{background:var(--pale);border-color:var(--green)}
+.icon-btn.del{color:var(--muted)}
+.icon-btn.del:hover{color:var(--bad);border-color:var(--bad);background:var(--bad-bg)}
+.icon-btn svg{width:18px;height:18px;flex:none}
+.empty{padding:16px 14px;color:var(--muted);display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;border:1px dashed var(--border);border-radius:6px}
+
+/* Dialogs */
+dialog{border:0;padding:0;border-radius:10px;background:var(--white);color:var(--ink);width:min(640px,calc(100vw - 24px));max-height:calc(100dvh - 24px);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog::backdrop{background:var(--overlay)}
+.dlg{display:flex;flex-direction:column;max-height:calc(100dvh - 24px)}
+.dlg-h{margin:10px 10px 0;padding:8px 8px 8px 16px;border-radius:7px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--green);color:var(--white)}
+.dlg-h h3{margin:0;font-size:1.05rem;text-transform:uppercase;letter-spacing:.04em}
+.dlg-x{min-width:44px;min-height:44px;border-radius:6px;border:0;background:rgba(255,255,255,.14);color:var(--white);font-size:1.4rem;cursor:pointer}
+.dlg-b{padding:16px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.dlg-f{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.dlg-f .btn{flex:1 1 140px}
+.addrow{display:flex;gap:8px;margin-top:6px}
+.addrow .inp{flex:1;min-width:0}
+.merge-box{padding:14px;border-radius:6px;background:var(--pale);border:1px solid var(--green)}
+.merge-actions{display:flex;flex-direction:column;gap:8px}
+.merge-actions .btn{justify-content:flex-start;text-align:left;padding:10px 16px;height:auto}
+.st-list{display:flex;flex-direction:column;gap:10px}
+.st-item{border:1px solid var(--border);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.st-item.current{border-color:var(--green);background:var(--pale)}
+.st-item .t{font-weight:700;color:var(--value)}
+.st-item .m{font-size:.9rem;color:var(--muted)}
+.st-item .a{display:flex;gap:8px;flex-wrap:wrap}
+.set-group{border:1px solid var(--border);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.set-group h4{margin:0;font-size:1rem;color:var(--green)}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opt{display:inline-flex;align-items:center;border:1px solid var(--border);border-radius:18px;background:var(--pale);overflow:hidden}
+.opt span{padding:6px 4px 6px 12px;font-weight:700;font-size:.95rem;color:var(--value)}
+.opt button{min-width:36px;min-height:36px;border:0;background:none;cursor:pointer;color:var(--muted);font-size:1rem}
+.opt button:hover{color:var(--ink);background:var(--grey-green)}
+.opt.editing{padding:2px}
+.opt.editing input{width:120px;min-height:32px;border:1px solid var(--border);border-radius:14px;padding:0 10px;background:var(--white);color:var(--value)}
+.check{display:flex;gap:10px;align-items:center;min-height:44px;cursor:pointer}
+.check input{width:22px;height:22px;accent-color:var(--green)}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--white);padding:12px 18px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:100;max-width:calc(100vw - 32px);font-weight:700;border-left:5px solid var(--green)}
+.toast.t-err{border-left-color:var(--bad)}
+
+#print-area{display:none}
+
+@media (max-width:860px){
+  .filters{grid-template-columns:1fr 1fr}
+  .filters .f-search{grid-column:1/-1}
+}
+@media (max-width:640px){
+  .logo-wrap img{height:44px}
+  .title-block h1{font-size:1.25rem}
+  .line{grid-template-columns:minmax(0,1fr) auto;padding:10px}
+  .line-main{grid-column:1/-1}
+  .line-actions{justify-content:flex-end}
+  .line-actions .lbl{display:none}
+  .top-actions{width:100%;flex-wrap:nowrap;gap:6px}
+  .save-state{font-size:.78rem;flex:1;min-width:0;white-space:normal;line-height:1.2}
+  .btn-top{padding:0 10px}
+  .tile .v{font-size:1.9rem}
+  .actions .btn{flex:1 1 140px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+@media print{
+  body{background:#fff;color:#1A1A1A}
+  .topbar,.rule,.subbar,main,.toast,dialog{display:none!important}
+  #print-area{display:block;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-size:10pt;color:#1A1A1A}
+  #print-area .p-head{display:flex;justify-content:space-between;align-items:center;gap:20px}
+  #print-area .p-head img{height:20mm;width:auto}
+  #print-area .p-title{text-align:right}
+  #print-area .p-title h1{font-size:17pt;margin:0}
+  #print-area .p-title div{font-size:9pt;color:#6B6B6B}
+  #print-area .p-rule{border-top:1.5pt solid #1F5A2D;margin:6px 0 10px}
+  #print-area h2{font-size:11pt;margin:12px 0 6px;padding:5px 10px;border-radius:6px;background:#1F5A2D;color:#fff;text-transform:uppercase;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #print-area table{width:100%;border-collapse:collapse}
+  #print-area th,#print-area td{border:0.5pt solid #CBD3CD;padding:3px 6px;text-align:left;vertical-align:top}
+  #print-area td{color:#2E6DA4}
+  #print-area th{background:#EDF2EE;color:#1A1A1A;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #print-area table.kf th{background:#EDF2EE;color:#1F5A2D;width:28%}
+  #print-area td.r,#print-area th.r{text-align:right}
+  #print-area tr.dmg td{background:#FFE7A8;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #print-area tr.qtn td{background:#F6C9C4;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #print-area .sig{display:flex;gap:40px;margin-top:24px}
+  #print-area .sig div{flex:1;border-top:0.5pt solid #1A1A1A;padding-top:4px}
+  #print-area .p-foot{display:flex;justify-content:space-between;margin-top:14px;font-size:8pt;color:#6B6B6B}
+  @page{size:A4 landscape;margin:15mm}
+}
+</style>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="logo-wrap">
+      <img id="logo-img" src="logo.png" alt="Cheltenham Green Civils">
+      <span class="logo-fallback" id="logo-fallback" hidden>Cheltenham Green Civils</span>
+    </div>
+    <div class="title-block">
+      <h1>Drainage Stocktake</h1>
+      <div class="doc-ref" id="doc-ref">DS-0001 · v1</div>
+    </div>
+  </div>
+  <div class="rule"></div>
+</header>
+<div class="subbar">
+  <div class="subbar-in">
+    <div class="brand-sub" id="brand-sub">New stocktake</div>
+    <div class="top-actions">
+      <div class="save-state" id="save-state" data-state="saved" role="status" aria-live="polite"><span class="dot"></span><span id="save-text">Saved on this device</span></div>
+      <button class="btn-top" id="btn-stocktakes" type="button">Stocktakes</button>
+      <button class="btn-top" id="btn-settings" type="button">Settings</button>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="sample-banner" id="sample-banner" hidden>
+    <div><strong>Example data.</strong> This stocktake is filled with sample lines so you can see how the app works. Don't export it as a real count.</div>
+    <button class="btn btn-dark btn-sm" id="btn-sample-new" type="button">Start a real stocktake</button>
+  </div>
+
+  <section class="panel" aria-labelledby="h-details">
+    <div class="panel-h"><h2 id="h-details">Stocktake details</h2><span class="hint">Project name and reference appear in the Excel export</span></div>
+    <div class="panel-b">
+      <div class="form-grid">
+        <div class="field"><label for="d-project">Project / Site Name</label><input class="inp" id="d-project" data-k="project" autocomplete="off"></div>
+        <div class="field"><label for="d-location">Site Location</label><input class="inp" id="d-location" data-k="location" autocomplete="off"></div>
+        <div class="field"><label for="d-ref">Stocktake Reference</label><input class="inp" id="d-ref" data-k="ref" autocomplete="off"></div>
+        <div class="field"><label for="d-date">Stocktake Date</label><input class="inp" id="d-date" data-k="date" type="date"></div>
+        <div class="field"><label for="d-by">Completed By</label><input class="inp" id="d-by" data-k="completedBy" autocomplete="off"></div>
+        <div class="field"><label for="d-checked">Checked By</label><input class="inp" id="d-checked" data-k="checkedBy" autocomplete="off"></div>
+        <div class="field wide"><label for="d-notes">Notes / Comments</label><textarea class="inp" id="d-notes" data-k="notes"></textarea></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-dash">
+    <div class="panel-h"><h2 id="h-dash">Summary</h2><div class="dash-meta" id="dash-meta"></div></div>
+    <div class="panel-b">
+      <div class="tiles" id="tiles"></div>
+      <div class="tbl-wrap"><table class="sum" id="cat-table"></table></div>
+    </div>
+  </section>
+
+  <div class="actions">
+    <button class="btn btn-primary" id="btn-export" type="button">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
+      Export Stocktake to Excel
+    </button>
+    <button class="btn" id="btn-print" type="button">Print summary</button>
+    <button class="btn btn-danger" id="btn-reset" type="button">Clear this stocktake</button>
+  </div>
+
+  <section class="panel" aria-label="Search and filters">
+    <div class="panel-b">
+      <div class="filters">
+        <div class="field f-search"><label for="f-search">Search</label><input class="inp" id="f-search" type="search" placeholder="Type, diameter, spec or notes, e.g. 150 45" autocomplete="off"></div>
+        <div class="field"><label for="f-cat">Category</label><select class="inp" id="f-cat"></select></div>
+        <div class="field"><label for="f-dia">Diameter</label><select class="inp" id="f-dia"></select></div>
+        <div class="field"><label for="f-cond">Condition</label><select class="inp" id="f-cond"></select></div>
+        <button class="btn" id="f-clear" type="button">Clear</button>
+      </div>
+      <div class="filter-count" id="filter-count"></div>
+      <div class="jump" id="jump" aria-label="Jump to category"></div>
+    </div>
+  </section>
+
+  <div id="sections" style="display:flex;flex-direction:column;gap:14px"></div>
+</main>
+
+<div id="print-area"></div>
+
+<dialog id="dlg" aria-labelledby="dlg-title"><div class="dlg" id="dlg-inner"></div></dialog>
+<dialog id="dlg2" aria-labelledby="dlg2-title"><div class="dlg" id="dlg2-inner"></div></dialog>
+<input type="file" id="restore-file" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ---------------- Constants & configuration ---------------- */
+const STORE_KEY = 'cgc-drainage-stocktake-v1';
+const DOC_REF = 'DS-0001 · v1';
+const CONDITIONS = ['Good','Damaged','Quarantined'];
+
+function pipeSizes(){ const a=[100,150]; for(let d=225; d<=1500; d+=75) a.push(d); return a; }
+
+const LIST_META = {
+  manholeDiameters:{label:'Manhole diameters', unit:'mm', numeric:true, def:[1200,1350,1500,1800,2100]},
+  manholeHeights:{label:'Manhole heights', unit:'mm', numeric:true, def:[250,500,750,1000]},
+  pipeDiameters:{label:'Pipe diameters (pipework, bends and seals)', unit:'mm', numeric:true, def:pipeSizes()},
+  pipeMaterials:{label:'Pipe materials / types', def:['Concrete','Plastic','Clay','Other']},
+  pipeLengths:{label:'Standard pipe lengths', unit:'m', numeric:true, decimal:true, def:[1,1.6,2,2.5,3,6]},
+  bendAngles:{label:'Bend angles', unit:'°', numeric:true, decimal:true, def:[15,30,45,90]},
+  bendMaterials:{label:'Bend materials / types', def:['Concrete','Plastic','Clay','Other']},
+  sealTypes:{label:'Seal types', def:['Pipe joint seal','Manhole connector seal','Other']},
+  entryConfigs:{label:'Cover slab entry configurations', def:['Single Entry','Double Entry']},
+  slabTypes:{label:'Cover slab types / specifications', def:['Standard duty','Heavy duty','Reducing slab','Other']},
+  loadRatings:{label:'Lid load ratings', def:['B125','D400']},
+  openerConfigs:{label:'Lid opener configurations', def:['Single Opener','Double Opener']},
+  coverTypes:{label:'Lid cover types / specifications', def:['Solid top','Recessed (block infill)','Other']}
+};
+
+/* col = Full Stock Register column the field feeds */
+const CATS = [
+  {key:'manholes', name:'Manholes', singular:'Manhole', add:'Add manhole', fields:[
+    {key:'diameter', label:'Diameter', list:'manholeDiameters', col:'diameter'},
+    {key:'height', label:'Height', list:'manholeHeights', col:'height'}]},
+  {key:'pipework', name:'Pipework', singular:'Pipework', add:'Add pipework', fields:[
+    {key:'diameter', label:'Pipe Diameter', list:'pipeDiameters', col:'diameter'},
+    {key:'material', label:'Pipe Material / Type', list:'pipeMaterials', col:'material'},
+    {key:'length', label:'Pipe Length', list:'pipeLengths', col:'length', optional:true, custom:true}]},
+  {key:'bends', name:'Drainage Bends', singular:'Drainage Bend', add:'Add bend', fields:[
+    {key:'diameter', label:'Pipe Diameter', list:'pipeDiameters', col:'diameter'},
+    {key:'angle', label:'Bend Angle', list:'bendAngles', col:'angle'},
+    {key:'material', label:'Bend Material / Type', list:'bendMaterials', col:'material', optional:true}]},
+  {key:'seals', name:'Rubber Seals', singular:'Rubber Seal', add:'Add seal', fields:[
+    {key:'diameter', label:'Seal Diameter', list:'pipeDiameters', col:'diameter'},
+    {key:'type', label:'Seal Type', list:'sealTypes', col:'material', optional:true}]},
+  {key:'slabs', name:'Cover Slabs', singular:'Cover Slab', add:'Add cover slab', fields:[
+    {key:'diameter', label:'Manhole Diameter', list:'manholeDiameters', col:'diameter'},
+    {key:'entry', label:'Entry Configuration', list:'entryConfigs', col:'entry'},
+    {key:'type', label:'Slab Type / Specification', list:'slabTypes', col:'material', optional:true}]},
+  {key:'lids', name:'Manhole Lids', singular:'Manhole Lid', add:'Add lid', fields:[
+    {key:'load', label:'Load Rating', list:'loadRatings', col:'load'},
+    {key:'opener', label:'Opener Configuration', list:'openerConfigs', col:'opener'},
+    {key:'diameter', label:'Associated Manhole Diameter', list:'manholeDiameters', col:'diameter', optional:true},
+    {key:'type', label:'Cover Type / Specification', list:'coverTypes', col:'material', optional:true}]}
+];
+const CAT = Object.fromEntries(CATS.map(c=>[c.key,c]));
+
+/* ---------------- Helpers ---------------- */
+const $ = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const nf = new Intl.NumberFormat('en-GB');
+const nf2 = new Intl.NumberFormat('en-GB',{maximumFractionDigits:2});
+function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function fmtDate(iso){ if(!iso||!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso||''; const [y,m,d]=iso.split('-'); return d+'/'+m+'/'+y; }
+function round2(n){ return Math.round(n*100)/100; }
+const clone = o => JSON.parse(JSON.stringify(o));
+
+function fmtVal(listKey, v){
+  if(v===''||v==null) return '';
+  const m = LIST_META[listKey];
+  if(m && m.unit){ return (m.decimal? nf2.format(v) : nf.format(v)).replace(/,/g, m.unit==='mm'?'':',') + (m.unit==='°'?'°':' '+m.unit); }
+  return String(v);
+}
+function describe(line){
+  const s=line.spec||{}, c=line.cat;
+  const parts=[];
+  if(c==='manholes'){ parts.push(fmtVal('manholeDiameters',s.diameter)+' dia', fmtVal('manholeHeights',s.height)+' height'); }
+  else if(c==='pipework'){ parts.push(fmtVal('pipeDiameters',s.diameter)+' dia'); if(s.material) parts.push(s.material); if(s.length!==''&&s.length!=null) parts.push(fmtVal('pipeLengths',s.length)+' lengths'); }
+  else if(c==='bends'){ parts.push(fmtVal('pipeDiameters',s.diameter)+' dia', fmtVal('bendAngles',s.angle)); if(s.material) parts.push(s.material); }
+  else if(c==='seals'){ parts.push(fmtVal('pipeDiameters',s.diameter)+' dia'); if(s.type) parts.push(s.type); }
+  else if(c==='slabs'){ parts.push('For '+fmtVal('manholeDiameters',s.diameter)+' manhole', s.entry); if(s.type) parts.push(s.type); }
+  else if(c==='lids'){ parts.push(s.load, s.opener); if(s.diameter!==''&&s.diameter!=null) parts.push('for '+fmtVal('manholeDiameters',s.diameter)+' manhole'); if(s.type) parts.push(s.type); }
+  return parts.filter(Boolean).join(' · ');
+}
+function linearMetres(line){
+  if(line.cat!=='pipework') return null;
+  const L = Number(line.spec.length);
+  if(line.spec.length===''||line.spec.length==null||!isFinite(L)||L<=0) return null;
+  return round2(L*line.qty);
+}
+function specKey(line){
+  const c=CAT[line.cat];
+  return line.cat+'|'+c.fields.map(f=>String(line.spec[f.key]??'')).join('|')+'|'+line.condition;
+}
+
+/* ---------------- Persistence ---------------- */
+let storageOK = true;
+function defaultSettings(){
+  const lists={}; for(const k in LIST_META) lists[k]=LIST_META[k].def.slice();
+  return {company:'Cheltenham Green Civils', pin:'', lists};
+}
+function blankStocktake(){
+  return {id:uid(), created:Date.now(), updated:Date.now(),
+    details:{project:'', location:'', ref:'', date:todayISO(), completedBy:'', checkedBy:'', notes:''}, lines:[]};
+}
+function sampleStocktake(){
+  const st=blankStocktake();
+  st.sample=true;
+  Object.assign(st.details,{project:'Example Site – Plot 4 Drainage', location:'Compound 2, north laydown', ref:'ST-EXAMPLE-01', completedBy:'Site Manager', notes:'Example stocktake showing how lines are recorded.'});
+  const L=(cat,spec,qty,condition='Good',notes='')=>({id:uid(),cat,spec,qty,condition,notes,created:Date.now()});
+  st.lines=[
+    L('manholes',{diameter:1500,height:500},8),
+    L('manholes',{diameter:1200,height:250},6),
+    L('manholes',{diameter:1200,height:500},1,'Damaged','Cracked joint, supplier notified'),
+    L('pipework',{diameter:150,material:'Plastic',length:6},24),
+    L('pipework',{diameter:225,material:'Concrete',length:2.5},12),
+    L('bends',{diameter:150,angle:45,material:'Plastic'},12),
+    L('seals',{diameter:225,type:'Pipe joint seal'},20),
+    L('slabs',{diameter:1500,entry:'Double Entry',type:'Standard duty'},3),
+    L('lids',{load:'D400',opener:'Double Opener',diameter:1500,type:'Solid top'},4,'Quarantined','Awaiting check against road layout')
+  ];
+  return st;
+}
+function seed(){
+  const st=sampleStocktake();
+  return {v:1, settings:defaultSettings(), stocktakes:{[st.id]:st}, currentId:st.id, ui:{collapsed:{}, last:{}}};
+}
+function migrate(d){
+  if(!d||typeof d!=='object'||!d.stocktakes||typeof d.stocktakes!=='object') return null;
+  const def=defaultSettings();
+  d.settings = Object.assign({}, def, d.settings||{});
+  d.settings.lists = Object.assign({}, def.lists, (d.settings&&d.settings.lists)||{});
+  d.ui = Object.assign({collapsed:{}, last:{}}, d.ui||{});
+  for(const id in d.stocktakes){
+    const st=d.stocktakes[id];
+    st.details=Object.assign(blankStocktake().details, st.details||{});
+    st.lines=(st.lines||[]).filter(l=>l&&CAT[l.cat]).map(l=>({id:l.id||uid(), cat:l.cat, spec:l.spec||{}, qty:Math.max(0,parseInt(l.qty,10)||0), condition:CONDITIONS.includes(l.condition)?l.condition:'Good', notes:l.notes||'', created:l.created||Date.now()}));
+  }
+  if(!d.stocktakes[d.currentId]){ const ids=Object.keys(d.stocktakes); if(ids.length) d.currentId=ids[0]; else { const st=blankStocktake(); d.stocktakes[st.id]=st; d.currentId=st.id; } }
+  return d;
+}
+function load(){
+  try{ const raw=localStorage.getItem(STORE_KEY); if(raw){ const d=migrate(JSON.parse(raw)); if(d) return d; } }
+  catch(e){ storageOK=false; }
+  return seed();
+}
+let db = load();
+const cur = () => db.stocktakes[db.currentId];
+
+let saveTimer=null;
+function setSaveState(state, text){ const el=$('#save-state'); el.dataset.state=state; $('#save-text').textContent=text; }
+function writeNow(){
+  clearTimeout(saveTimer); saveTimer=null;
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(db)); storageOK=true;
+    const t=new Date(); setSaveState('saved','Saved on this device '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'));
+  }catch(e){ storageOK=false; setSaveState('error','Not saved: browser storage blocked'); }
+}
+function persist(){ setSaveState('saving','Saving…'); clearTimeout(saveTimer); saveTimer=setTimeout(writeNow, 350); }
+function touch(){ cur().updated=Date.now(); persist(); }
+window.addEventListener('pagehide', ()=>{ if(saveTimer) writeNow(); });
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden' && saveTimer) writeNow(); });
+
+/* ---------------- Toast ---------------- */
+let toastTimer;
+function toast(msg, isErr){ const t=$('#toast'); t.textContent=msg; t.className='toast'+(isErr?' t-err':''); t.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>{t.hidden=true;}, isErr?6000:3200); }
+
+/* ---------------- Stats ---------------- */
+function stats(st){
+  const by={}; CATS.forEach(c=>by[c.key]={lines:0, qty:0, lm:0});
+  let units=0, damaged=0, quarantined=0, lm=0;
+  for(const l of st.lines){ const b=by[l.cat]; b.lines++; b.qty+=l.qty; units+=l.qty;
+    const m=linearMetres(l); if(m) { b.lm+=m; lm+=m; }
+    if(l.condition==='Damaged') damaged+=l.qty; if(l.condition==='Quarantined') quarantined+=l.qty; }
+  const catsStocked = CATS.filter(c=>by[c.key].qty>0).length;
+  return {lines:st.lines.length, units, damaged, quarantined, by, catsStocked, lm:round2(lm)};
+}
+
+/* ---------------- Rendering ---------------- */
+function renderHeader(){
+  const d=cur().details;
+  const bits=[d.project||'Untitled stocktake', d.ref, fmtDate(d.date)].filter(Boolean);
+  $('#brand-sub').textContent=bits.join(' · ');
+  $('#sample-banner').hidden=!cur().sample;
+}
+function renderDetails(){
+  const d=cur().details;
+  $$('[data-k]').forEach(inp=>{ inp.value=d[inp.dataset.k]||''; });
+}
+function renderDashboard(){
+  const st=cur(), s=stats(st), d=st.details;
+  $('#dash-meta').innerHTML = '<b>'+esc(d.project||'Untitled project')+'</b>'+(d.ref?' · Ref <b>'+esc(d.ref)+'</b>':'')+' · '+esc(fmtDate(d.date)||'No date');
+  $('#tiles').innerHTML = [
+    ['Stock lines', s.lines, ''],
+    ['Total units', s.units, ''],
+    ['Categories stocked', s.catsStocked+'<span style="font-size:1.2rem;color:var(--muted)"> / '+CATS.length+'</span>', ''],
+    ['Pipe linear metres', nf2.format(s.lm), ''],
+    ['Damaged units', s.damaged, s.damaged?'t-warn':''],
+    ['Quarantined units', s.quarantined, s.quarantined?'t-bad':'']
+  ].map(([k,v,cls])=>'<div class="tile '+cls+'"><div class="v num" data-tile="'+esc(k)+'">'+(typeof v==='number'?nf.format(v):v)+'</div><div class="k">'+k+'</div></div>').join('');
+  const max=Math.max(1,...CATS.map(c=>s.by[c.key].qty));
+  $('#cat-table').innerHTML = '<thead><tr><th>Material category</th><th class="r">Stock lines</th><th class="r">Total quantity</th></tr></thead><tbody>'+
+    CATS.map(c=>{const b=s.by[c.key]; return '<tr><td>'+esc(c.name)+'</td><td class="r num">'+nf.format(b.lines)+'</td><td class="r num"><span class="bar" style="width:'+Math.round(b.qty/max*60)+'px"></span>'+nf.format(b.qty)+'</td></tr>';}).join('')+
+    '</tbody><tfoot><tr><td>Total</td><td class="r num">'+nf.format(s.lines)+'</td><td class="r num">'+nf.format(s.units)+'</td></tr></tfoot>';
+  CATS.forEach(c=>renderCatHeader(c.key, s));
+  renderJump(s);
+}
+function renderCatHeader(key, s){
+  s=s||stats(cur());
+  const el=$('#cat-stats-'+key); if(!el) return;
+  const b=s.by[key];
+  el.innerHTML='<span class="badge">'+nf.format(b.lines)+(b.lines===1?' line':' lines')+'</span><span class="badge strong num">'+nf.format(b.qty)+' units</span>'+(key==='pipework'&&b.lm?'<span class="badge num">'+nf2.format(b.lm)+' m</span>':'');
+}
+function renderJump(s){
+  $('#jump').innerHTML = CATS.map(c=>'<button class="chip" type="button" data-jump="'+c.key+'">'+esc(c.name)+'<span class="c">'+nf.format(s.by[c.key].qty)+'</span></button>').join('');
+}
+
+const filters={q:'', cat:'', dia:'', cond:''};
+function renderFilterOptions(){
+  const fc=$('#f-cat'), fd=$('#f-dia'), fcond=$('#f-cond');
+  fc.innerHTML='<option value="">All categories</option>'+CATS.map(c=>'<option value="'+c.key+'">'+esc(c.name)+'</option>').join('');
+  const dias=new Set([...db.settings.lists.manholeDiameters, ...db.settings.lists.pipeDiameters]);
+  cur().lines.forEach(l=>{ if(l.spec.diameter!==''&&l.spec.diameter!=null) dias.add(Number(l.spec.diameter)); });
+  fd.innerHTML='<option value="">All diameters</option>'+[...dias].filter(n=>isFinite(n)).sort((a,b)=>a-b).map(d=>'<option value="'+d+'">'+d+' mm</option>').join('');
+  fcond.innerHTML='<option value="">All conditions</option>'+CONDITIONS.map(c=>'<option>'+c+'</option>').join('');
+  fc.value=filters.cat; fd.value=filters.dia; fcond.value=filters.cond;
+  if(fd.value!==filters.dia){ filters.dia=''; }
+}
+function lineMatches(l){
+  if(filters.cat && l.cat!==filters.cat) return false;
+  if(filters.cond && l.condition!==filters.cond) return false;
+  if(filters.dia && String(l.spec.diameter)!==filters.dia) return false;
+  if(filters.q){
+    const hay=(CAT[l.cat].name+' '+CAT[l.cat].singular+' '+describe(l)+' '+Object.values(l.spec).join(' ')+' '+l.condition+' '+l.notes).toLowerCase();
+    return filters.q.toLowerCase().split(/\s+/).filter(Boolean).every(t=>hay.includes(t));
+  }
+  return true;
+}
+const filtersActive = () => !!(filters.q||filters.cat||filters.dia||filters.cond);
+
+const ICON = {
+  edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>',
+  dup:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>',
+  del:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>'
+};
+function lineHTML(l){
+  const lm=linearMetres(l);
+  const cond=l.condition.toLowerCase();
+  return '<li class="line c-'+cond+'" data-id="'+l.id+'">'+
+    '<div class="line-main"><div class="line-title">'+esc(describe(l))+'</div>'+
+    '<div class="line-meta"><span class="pill '+cond+'">'+l.condition+'</span>'+
+    (l.cat==='pipework'?'<span class="lm num" data-lm>'+(lm!=null?nf2.format(lm)+' m total':'No length recorded')+'</span>':'')+
+    (l.notes?'<span class="note">'+esc(l.notes)+'</span>':'')+'</div></div>'+
+    '<div class="stepper" role="group" aria-label="Quantity">'+
+      '<button class="step" type="button" data-act="minus" aria-label="Decrease quantity"'+(l.qty<=0?' disabled':'')+'>−</button>'+
+      '<input class="qty num" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="5" aria-label="Quantity on site" value="'+l.qty+'">'+
+      '<button class="step" type="button" data-act="plus" aria-label="Increase quantity">+</button></div>'+
+    '<div class="line-actions">'+
+      '<button class="icon-btn" type="button" data-act="edit" title="Edit line">'+ICON.edit+'<span class="lbl">Edit</span></button>'+
+      '<button class="icon-btn" type="button" data-act="dup" title="Duplicate line">'+ICON.dup+'<span class="lbl">Duplicate</span></button>'+
+      '<button class="icon-btn del" type="button" data-act="del" title="Remove line">'+ICON.del+'<span class="lbl">Remove</span></button>'+
+    '</div></li>';
+}
+function renderSections(){
+  const st=cur(), host=$('#sections');
+  let shown=0;
+  host.innerHTML = CATS.map(c=>{
+    if(filters.cat && filters.cat!==c.key) return '';
+    const all=st.lines.filter(l=>l.cat===c.key);
+    const list=all.filter(lineMatches); shown+=list.length;
+    const collapsed=!!db.ui.collapsed[c.key];
+    let body;
+    if(list.length) body='<ul class="lines">'+list.map(lineHTML).join('')+'</ul>';
+    else if(all.length) body='<div class="empty">No '+esc(c.name.toLowerCase())+' match the current filters.</div>';
+    else body='<div class="empty"><span>No '+esc(c.name.toLowerCase())+' recorded yet.</span><button class="btn btn-sm" type="button" data-add="'+c.key+'">+ '+esc(c.add)+'</button></div>';
+    return '<section class="panel cat" id="cat-'+c.key+'" data-cat="'+c.key+'" data-collapsed="'+collapsed+'">'+
+      '<div class="cat-h"><button class="cat-toggle" type="button" data-toggle="'+c.key+'" aria-expanded="'+(!collapsed)+'" aria-controls="cat-b-'+c.key+'">'+
+        '<span class="chev" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></span>'+
+        '<h2>'+esc(c.name)+'</h2></button>'+
+        '<div class="cat-stats" id="cat-stats-'+c.key+'"></div>'+
+        '<button class="btn btn-dark btn-sm" type="button" data-add="'+c.key+'">+ '+esc(c.add)+'</button></div>'+
+      '<div class="cat-b" id="cat-b-'+c.key+'"'+(collapsed?' hidden':'')+'>'+body+'</div></section>';
+  }).join('');
+  const total=st.lines.length;
+  $('#filter-count').textContent = filtersActive()? 'Showing '+shown+' of '+total+' lines' : total+' lines recorded';
+  renderDashboard();
+}
+function renderAll(){ renderHeader(); renderDetails(); renderFilterOptions(); renderSections(); }
+
+/* ---------------- Quantity handling ---------------- */
+function findLine(id){ return cur().lines.find(l=>l.id===id); }
+function afterQty(li, l){
+  const inp=$('.qty',li); if(document.activeElement!==inp) inp.value=l.qty;
+  $('[data-act="minus"]',li).disabled = l.qty<=0;
+  const lmEl=$('[data-lm]',li); if(lmEl){ const lm=linearMetres(l); lmEl.textContent= lm!=null? nf2.format(lm)+' m total':'No length recorded'; }
+  renderDashboard(); touch();
+}
+const sections=$('#sections');
+sections.addEventListener('click', e=>{
+  const t=e.target.closest('button'); if(!t) return;
+  if(t.dataset.toggle){ const k=t.dataset.toggle; db.ui.collapsed[k]=!db.ui.collapsed[k]; const sec=$('#cat-'+k); sec.dataset.collapsed=db.ui.collapsed[k]; $('#cat-b-'+k).hidden=db.ui.collapsed[k]; t.setAttribute('aria-expanded', !db.ui.collapsed[k]); persist(); return; }
+  if(t.dataset.add){ openLineDialog(t.dataset.add); return; }
+  const li=t.closest('.line'); if(!li) return;
+  const l=findLine(li.dataset.id); if(!l) return;
+  const act=t.dataset.act;
+  if(act==='plus'){ l.qty=Math.min(99999,l.qty+1); afterQty(li,l); }
+  else if(act==='minus'){ l.qty=Math.max(0,l.qty-1); afterQty(li,l); }
+  else if(act==='edit'){ openLineDialog(l.cat,{line:l}); }
+  else if(act==='dup'){ openLineDialog(l.cat,{prefill:l}); }
+  else if(act==='del'){ confirmBox({title:'Remove line?', body:'<p style="margin:0">Remove <b>'+esc(CAT[l.cat].singular+': '+describe(l))+'</b> ('+l.qty+' units, '+l.condition+') from this stocktake?</p>', ok:'Remove line', danger:true}).then(ok=>{ if(!ok) return; cur().lines=cur().lines.filter(x=>x.id!==l.id); touch(); renderFilterOptions(); renderSections(); toast('Line removed'); }); }
+});
+sections.addEventListener('input', e=>{
+  const inp=e.target; if(!inp.classList.contains('qty')) return;
+  const li=inp.closest('.line'), l=findLine(li.dataset.id); if(!l) return;
+  const clean=inp.value.replace(/\D/g,'').slice(0,5);
+  if(clean!==inp.value){ inp.value=clean; toast('Quantities must be whole numbers, 0 or more', true); }
+  l.qty = clean===''?0:parseInt(clean,10);
+  afterQty(li,l);
+});
+sections.addEventListener('focusin', e=>{ if(e.target.classList.contains('qty')) setTimeout(()=>e.target.select(),0); });
+sections.addEventListener('focusout', e=>{ const inp=e.target; if(!inp.classList.contains('qty')) return; const l=findLine(inp.closest('.line').dataset.id); if(l){ inp.value=l.qty; } });
+sections.addEventListener('keydown', e=>{ if(e.target.classList.contains('qty') && e.key==='Enter'){ e.target.blur(); } });
+
+$('#jump').addEventListener('click', e=>{
+  const b=e.target.closest('[data-jump]'); if(!b) return; const k=b.dataset.jump;
+  if(filters.cat && filters.cat!==k){ filters.cat=''; $('#f-cat').value=''; renderSections(); }
+  if(db.ui.collapsed[k]){ db.ui.collapsed[k]=false; persist(); renderSections(); }
+  const sec=$('#cat-'+k); if(sec) sec.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth', block:'start'});
+});
+
+/* ---------------- Details & filters ---------------- */
+$$('[data-k]').forEach(inp=>inp.addEventListener('input', ()=>{
+  const st=cur(); st.details[inp.dataset.k]=inp.value;
+  if(inp.dataset.k==='date' && !inp.value){ /* allow clearing, but warn */ }
+  renderHeader(); renderDashboard(); touch();
+}));
+$('#d-date').addEventListener('blur', e=>{ if(!e.target.value){ e.target.value=todayISO(); cur().details.date=e.target.value; renderHeader(); renderDashboard(); touch(); toast('Stocktake date reset to today'); } });
+$('#f-search').addEventListener('input', e=>{ filters.q=e.target.value.trim(); renderSections(); });
+$('#f-cat').addEventListener('change', e=>{ filters.cat=e.target.value; renderSections(); });
+$('#f-dia').addEventListener('change', e=>{ filters.dia=e.target.value; renderSections(); });
+$('#f-cond').addEventListener('change', e=>{ filters.cond=e.target.value; renderSections(); });
+$('#f-clear').addEventListener('click', ()=>{ filters.q=filters.cat=filters.dia=filters.cond=''; $('#f-search').value=''; renderFilterOptions(); renderSections(); });
+
+/* ---------------- Dialog infrastructure ---------------- */
+function openDialog(id, html){
+  const d=$('#'+id); $('#'+id+'-inner').innerHTML=html;
+  if(!d.open){ try{ d.showModal(); }catch(e){ d.setAttribute('open',''); } }
+  return d;
+}
+function closeDialog(id){ const d=$('#'+id); if(d.open) d.close(); }
+function dlgShell(id, title, body, foot){
+  return '<div class="dlg-h"><h3 id="'+id+'-title">'+esc(title)+'</h3><button class="dlg-x" type="button" data-close="'+id+'" aria-label="Close">×</button></div>'+
+    '<div class="dlg-b">'+body+'</div>'+(foot?'<div class="dlg-f">'+foot+'</div>':'');
+}
+document.addEventListener('click', e=>{ const c=e.target.closest('[data-close]'); if(c) closeDialog(c.dataset.close); });
+
+/* Confirmation (uses the second dialog layer so it can sit over another dialog) */
+function confirmBox({title, body, ok='Confirm', cancel='Cancel', danger=false, checkbox=null}){
+  return new Promise(resolve=>{
+    const d=openDialog('dlg2', dlgShell('dlg2', title, body + (checkbox?'<label class="check"><input type="checkbox" id="cb-extra"'+(checkbox.checked?' checked':'')+'> '+esc(checkbox.label)+'</label>':''),
+      '<button class="btn" type="button" id="cb-cancel">'+esc(cancel)+'</button><button class="btn '+(danger?'btn-danger':'btn-primary')+'" type="button" id="cb-ok">'+esc(ok)+'</button>'));
+    let done=false;
+    const finish=v=>{ if(done) return; done=true; const extra=checkbox? $('#cb-extra').checked : undefined; closeDialog('dlg2'); resolve(checkbox? (v?{ok:true, checked:extra}:false) : v); };
+    $('#cb-ok').onclick=()=>finish(true);
+    $('#cb-cancel').onclick=()=>finish(false);
+    d.addEventListener('close', ()=>finish(false), {once:true});
+    setTimeout(()=>$('#cb-cancel').focus(),0);
+  });
+}
+
+/* ---------------- Add / edit line ---------------- */
+function optionLabel(listKey, v){ return fmtVal(listKey, v); }
+function fieldHTML(f, value){
+  const list=db.settings.lists[f.list]||[];
+  const meta=LIST_META[f.list];
+  const id='lf-'+f.key;
+  let opts='';
+  if(f.optional) opts+='<option value="">— Not specified —</option>';
+  let found=false;
+  list.forEach(v=>{ const sel=String(v)===String(value); if(sel) found=true; opts+='<option value="'+esc(v)+'"'+(sel?' selected':'')+'>'+esc(optionLabel(f.list,v))+'</option>'; });
+  const isCustom = f.custom && value!=='' && value!=null && !found;
+  if(!found && value!=='' && value!=null && !f.custom){ opts+='<option value="'+esc(value)+'" selected>'+esc(optionLabel(f.list,value))+' (not in list)</option>'; }
+  if(f.custom) opts+='<option value="__custom__"'+(isCustom?' selected':'')+'>Custom length…</option>';
+  opts+='<option value="__add__">+ Add new '+(meta.unit?'size':'option')+' to list…</option>';
+  return '<div class="field"><label for="'+id+'">'+esc(f.label)+(f.optional?' <span class="hint">(optional)</span>':'')+(meta.unit?' <span class="hint">('+meta.unit+')</span>':'')+'</label>'+
+    '<select class="inp" id="'+id+'" data-field="'+f.key+'">'+opts+'</select>'+
+    (f.custom?'<div class="addrow" id="'+id+'-custom"'+(isCustom?'':' hidden')+'><input class="inp" type="number" inputmode="decimal" min="0.01" step="0.01" id="'+id+'-cv" placeholder="Length in metres" value="'+(isCustom?esc(value):'')+'"></div>':'')+
+    '<div class="addrow" id="'+id+'-add" hidden><input class="inp" id="'+id+'-av" '+(meta.numeric?'type="number" inputmode="decimal" min="0" step="any"':'type="text"')+' placeholder="New '+(meta.unit?'value in '+meta.unit:'option')+'"><button class="btn btn-sm btn-dark" type="button" data-addopt="'+f.key+'">Add</button></div>'+
+    '<div class="err" id="'+id+'-err" hidden></div></div>';
+}
+function addListValue(listKey, raw){
+  const meta=LIST_META[listKey]; const list=db.settings.lists[listKey];
+  let v=String(raw).trim();
+  if(!v) return {error:'Enter a value first.'};
+  if(meta.numeric){ const n=Number(v); if(!isFinite(n)||n<=0) return {error:'Enter a number greater than 0.'}; if(!meta.decimal && !Number.isInteger(n)) return {error:'Use a whole number of '+meta.unit+'.'}; v=meta.decimal?round2(n):n; }
+  if(list.some(x=>String(x).toLowerCase()===String(v).toLowerCase())) return {error:'That value is already in the list.', value:list.find(x=>String(x).toLowerCase()===String(v).toLowerCase())};
+  list.push(v); if(meta.numeric) list.sort((a,b)=>a-b);
+  persist();
+  return {value:v};
+}
+
+function openLineDialog(catKey, {line=null, prefill=null}={}){
+  const c=CAT[catKey];
+  const editing=!!line;
+  const src = line || prefill || null;
+  let spec={}, qty=0, condition='Good', notes='';
+  if(src){ spec=clone(src.spec); qty=editing?src.qty:0; condition=src.condition; notes=editing?src.notes:''; }
+  else {
+    const last=db.ui.last[catKey]||{};
+    c.fields.forEach(f=>{ const list=db.settings.lists[f.list]; if(last[f.key]!==undefined && (last[f.key]===''||list.some(v=>String(v)===String(last[f.key])))) spec[f.key]=last[f.key]; else spec[f.key]= f.optional? '' : (list[0]??''); });
+  }
+  const title=(editing?'Edit ':prefill?'Duplicate ':'Add ')+c.singular.toLowerCase()+' line';
+  const body = '<div class="form-grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">'+c.fields.map(f=>fieldHTML(f, spec[f.key])).join('')+
+    '<div class="field"><label for="lf-cond">Condition</label><select class="inp" id="lf-cond">'+CONDITIONS.map(x=>'<option'+(x===condition?' selected':'')+'>'+x+'</option>').join('')+'</select></div></div>'+
+    '<div class="field"><span class="flabel" id="lf-qty-l">Quantity on site'+(catKey==='pipework'?' (number of pipes, not metres)':'')+'</span>'+
+      '<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div class="stepper" role="group" aria-labelledby="lf-qty-l"><button class="step" type="button" id="lf-minus" aria-label="Decrease">−</button><input class="qty num" id="lf-qty" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="5" value="'+qty+'" aria-label="Quantity"><button class="step" type="button" id="lf-plus" aria-label="Increase">+</button></div>'+
+      (catKey==='pipework'?'<span class="hint num" id="lf-lm"></span>':'')+'</div></div>'+
+    (catKey==='lids'?'<p class="hint" style="margin:0">Record the manhole diameter and any compatibility notes. Not every lid fits every manhole or frame.</p>':'')+
+    '<div class="field"><label for="lf-notes">Notes <span class="hint">(optional)</span></label><textarea class="inp" id="lf-notes" placeholder="'+(catKey==='lids'?'e.g. Frame size, compatible chamber, supplier ref':'e.g. Location in compound, delivery ref, damage details')+'">'+esc(notes)+'</textarea></div>'+
+    '<div id="lf-merge" hidden></div>';
+  const foot='<button class="btn" type="button" data-close="dlg">Cancel</button><button class="btn btn-primary" type="button" id="lf-save">'+(editing?'Save changes':'Add line')+'</button>';
+  const d=openDialog('dlg', dlgShell('dlg', title, body, foot));
+  const qtyInp=$('#lf-qty');
+  const getLen=()=>{ const s=$('#lf-length'); if(!s) return null; if(s.value==='__custom__'){ const n=Number($('#lf-length-cv').value); return isFinite(n)&&n>0?n:null; } return s.value===''?null:Number(s.value); };
+  const updLm=()=>{ const el=$('#lf-lm'); if(!el) return; const L=getLen(); const q=parseInt(qtyInp.value,10)||0; el.textContent = L? '= '+nf2.format(round2(L*q))+' linear metres' : ''; $('#lf-minus').disabled=q<=0; };
+  const updMinus=()=>{ $('#lf-minus').disabled=(parseInt(qtyInp.value,10)||0)<=0; updLm(); };
+  updMinus();
+  $('#lf-minus').onclick=()=>{ qtyInp.value=Math.max(0,(parseInt(qtyInp.value,10)||0)-1); updMinus(); };
+  $('#lf-plus').onclick=()=>{ qtyInp.value=Math.min(99999,(parseInt(qtyInp.value,10)||0)+1); updMinus(); };
+  qtyInp.addEventListener('input', ()=>{ const c2=qtyInp.value.replace(/\D/g,'').slice(0,5); if(c2!==qtyInp.value){ qtyInp.value=c2; toast('Quantities must be whole numbers, 0 or more', true);} updMinus(); });
+  qtyInp.addEventListener('focus', ()=>setTimeout(()=>qtyInp.select(),0));
+  qtyInp.addEventListener('blur', ()=>{ if(qtyInp.value==='') qtyInp.value='0'; updMinus(); });
+
+  c.fields.forEach(f=>rebind(f));
+  function rebind(f){
+    const sel=$('#lf-'+f.key); sel.dataset.prev=sel.value;
+    sel.addEventListener('change', ()=>{
+      $('#lf-'+f.key+'-err').hidden=true;
+      if(sel.value==='__add__'){ $('#lf-'+f.key+'-add').hidden=false; $('#lf-'+f.key+'-av').focus(); sel.value=sel.dataset.prev; return; }
+      if(f.custom){ const box=$('#lf-'+f.key+'-custom'); box.hidden = sel.value!=='__custom__'; }
+      sel.dataset.prev=sel.value; updLm();
+    });
+    if(f.custom) $('#lf-'+f.key+'-cv').addEventListener('input', updLm);
+    const ab=$('[data-addopt="'+f.key+'"]', d);
+    ab.onclick=()=>{
+      const inp=$('#lf-'+f.key+'-av'), err=$('#lf-'+f.key+'-err');
+      const r=addListValue(f.list, inp.value);
+      if(r.error && r.value===undefined){ err.textContent=r.error; err.hidden=false; return; }
+      ab.closest('.field').outerHTML=fieldHTML(f, r.value); rebind(f);
+      toast(r.error? r.error+' Selected it for you.' : 'Added '+optionLabel(f.list,r.value)+' to the list');
+      renderFilterOptions();
+    };
+  }
+  function readSpec(loose){
+    const out={}; let ok=true;
+    c.fields.forEach(f=>{
+      const sel=$('#lf-'+f.key); let v=sel.value; const meta=LIST_META[f.list];
+      if(v==='__custom__'){ const n=Number($('#lf-'+f.key+'-cv').value); if(!(isFinite(n)&&n>0)){ if(!loose){ const e=$('#lf-'+f.key+'-err'); e.textContent='Enter a length in metres greater than 0.'; e.hidden=false; ok=false; } v=''; } else v=round2(n); }
+      else if(v==='__add__') v='';
+      else if(v!=='' && meta.numeric) v=Number(v);
+      if(v==='' && !f.optional && !loose){ const e=$('#lf-'+f.key+'-err'); e.textContent='Choose a '+f.label.toLowerCase()+'.'; e.hidden=false; ok=false; }
+      out[f.key]=v;
+    });
+    return loose? out : (ok? out : null);
+  }
+  $('#lf-save').onclick=()=>{
+    const s=readSpec(false); if(!s) return;
+    const q=parseInt(qtyInp.value,10); const qv=isFinite(q)&&q>=0?Math.min(q,99999):0;
+    const cand={id: editing? line.id : uid(), cat:catKey, spec:s, qty:qv, condition:$('#lf-cond').value, notes:$('#lf-notes').value.trim(), created: editing? line.created : Date.now()};
+    db.ui.last[catKey]=Object.assign({}, s);
+    const key=specKey(cand);
+    const match=cur().lines.find(x=>x.id!==cand.id && specKey(x)===key);
+    if(match){ showMerge(match, cand); return; }
+    commit(cand);
+  };
+  function commit(cand){
+    const st=cur();
+    if(editing){ const i=st.lines.findIndex(x=>x.id===cand.id); if(i>=0) st.lines[i]=cand; }
+    else st.lines.push(cand);
+    if(db.ui.collapsed[catKey]) db.ui.collapsed[catKey]=false;
+    touch(); closeDialog('dlg'); renderFilterOptions(); renderSections();
+    toast(editing?'Line updated':'Line added: '+c.singular+', '+describe(cand)+' × '+cand.qty);
+    const li=$('.line[data-id="'+cand.id+'"]'); if(li) li.scrollIntoView({block:'nearest'});
+  }
+  function showMerge(match, cand){
+    const box=$('#lf-merge'); box.hidden=false;
+    box.innerHTML='<div class="merge-box"><p style="margin:0 0 10px"><b>This specification is already recorded.</b><br>'+esc(c.singular+': '+describe(match))+' · '+match.condition+' · currently <b>'+match.qty+'</b> on site.</p>'+
+      '<div class="merge-actions">'+
+      '<button class="btn btn-primary" type="button" id="mg-add">Add '+cand.qty+' to the existing line (new total '+(Math.min(99999,match.qty+cand.qty))+')</button>'+
+      '<button class="btn" type="button" id="mg-set">Set the existing line to '+cand.qty+'</button>'+
+      '<button class="btn" type="button" id="mg-sep">Keep as a separate line</button>'+
+      '<button class="btn" type="button" id="mg-back">Go back and change the details</button></div></div>';
+    box.scrollIntoView({block:'nearest'});
+    $('#lf-save').disabled=true;
+    const mergeInto=(newQty)=>{
+      const st=cur();
+      match.qty=Math.min(99999,newQty);
+      if(cand.notes && !match.notes.includes(cand.notes)) match.notes = match.notes? match.notes+'; '+cand.notes : cand.notes;
+      if(editing) st.lines=st.lines.filter(x=>x.id!==cand.id);
+      touch(); closeDialog('dlg'); renderFilterOptions(); renderSections(); toast('Existing line updated to '+match.qty);
+    };
+    $('#mg-add').onclick=()=>mergeInto(match.qty+cand.qty);
+    $('#mg-set').onclick=()=>mergeInto(cand.qty);
+    $('#mg-sep').onclick=()=>commit(cand);
+    $('#mg-back').onclick=()=>{ box.hidden=true; $('#lf-save').disabled=false; };
+  }
+  setTimeout(()=>{ const first=$('#lf-'+c.fields[0].key); if(first) first.focus(); },0);
+}
+
+/* ---------------- Stocktakes ---------------- */
+function openStocktakes(){
+  const items=Object.values(db.stocktakes).sort((a,b)=>b.updated-a.updated);
+  const body='<button class="btn btn-primary" type="button" id="st-new">+ New stocktake</button>'+
+    '<p class="hint" style="margin:0">Stocktakes are saved in this browser on this device only. They do not sync to other phones or computers. Use <b>Settings → Download backup</b> to move them.</p>'+
+    '<div class="st-list">'+items.map(st=>{ const s=stats(st), d=st.details; const isCur=st.id===db.currentId;
+      return '<div class="st-item'+(isCur?' current':'')+'" data-st="'+st.id+'"><div><div class="t">'+esc(d.project||'Untitled stocktake')+(st.sample?' <span class="badge">Example</span>':'')+(isCur?' <span class="badge strong">Open</span>':'')+'</div>'+
+      '<div class="m">'+[d.ref?'Ref '+esc(d.ref):'', esc(fmtDate(d.date)), s.lines+' lines', nf.format(s.units)+' units', 'edited '+new Date(st.updated).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})].filter(Boolean).join(' · ')+'</div></div>'+
+      '<div class="a">'+(isCur?'':'<button class="btn btn-sm btn-dark" type="button" data-st-open>Open</button>')+'<button class="btn btn-sm" type="button" data-st-dup>Duplicate for a new count</button><button class="btn btn-sm btn-danger" type="button" data-st-del>Delete</button></div></div>'; }).join('')+'</div>';
+  const d=openDialog('dlg', dlgShell('dlg','Stocktakes', body));
+  $('#st-new').onclick=()=>{ const st=blankStocktake(); db.stocktakes[st.id]=st; db.currentId=st.id; writeNow(); closeDialog('dlg'); renderAll(); toast('New stocktake started'); $('#d-project').focus(); };
+  $$('.st-item', d).forEach(it=>{
+    const id=it.dataset.st, st=db.stocktakes[id];
+    const o=$('[data-st-open]',it); if(o) o.onclick=()=>{ db.currentId=id; writeNow(); closeDialog('dlg'); renderAll(); toast('Opened '+(st.details.project||'stocktake')); };
+    $('[data-st-dup]',it).onclick=async()=>{
+      const r=await confirmBox({title:'Duplicate stocktake', body:'<p style="margin:0">Creates a copy of <b>'+esc(st.details.project||'this stocktake')+'</b> with today\'s date, the same project details and all '+st.lines.length+' stock lines.</p>', ok:'Create copy', checkbox:{label:'Set every quantity to 0 for a fresh count', checked:true}});
+      if(!r) return;
+      const c2=clone(st); c2.id=uid(); c2.created=c2.updated=Date.now(); delete c2.sample;
+      c2.details.date=todayISO(); c2.details.checkedBy=''; c2.details.ref = st.details.ref? st.details.ref+'-COPY' : '';
+      c2.lines.forEach(l=>{ l.id=uid(); if(r.checked) l.qty=0; });
+      db.stocktakes[c2.id]=c2; db.currentId=c2.id; writeNow(); closeDialog('dlg'); renderAll(); toast('Copy created and opened. Update the reference if needed.');
+    };
+    $('[data-st-del]',it).onclick=async()=>{
+      const ok=await confirmBox({title:'Delete stocktake?', body:'<p style="margin:0">Permanently delete <b>'+esc(st.details.project||'Untitled stocktake')+'</b> ('+st.lines.length+' lines) from this device? This cannot be undone.</p>', ok:'Delete stocktake', danger:true});
+      if(!ok) return;
+      delete db.stocktakes[id];
+      if(db.currentId===id){ const rest=Object.values(db.stocktakes).sort((a,b)=>b.updated-a.updated); if(rest.length) db.currentId=rest[0].id; else { const n=blankStocktake(); db.stocktakes[n.id]=n; db.currentId=n.id; } }
+      writeNow(); renderAll(); openStocktakes(); toast('Stocktake deleted');
+    };
+  });
+}
+$('#btn-stocktakes').onclick=openStocktakes;
+$('#btn-sample-new').onclick=()=>{ const st=blankStocktake(); db.stocktakes[st.id]=st; db.currentId=st.id; writeNow(); renderAll(); toast('New stocktake started. The example is still under Stocktakes if you need it.'); $('#d-project').focus(); };
+
+$('#btn-reset').onclick=async()=>{
+  const st=cur();
+  const ok=await confirmBox({title:'Clear this stocktake?', body:'<p style="margin:0">This removes all '+st.lines.length+' stock lines and clears the project details for <b>'+esc(st.details.project||'this stocktake')+'</b>. The date resets to today. This cannot be undone.</p>', ok:'Clear everything', danger:true});
+  if(!ok) return;
+  const fresh=blankStocktake(); st.lines=[]; st.details=fresh.details; delete st.sample; touch(); renderAll(); toast('Stocktake cleared');
+};
+
+/* ---------------- Settings ---------------- */
+function usageCount(listKey, value){
+  let n=0;
+  for(const st of Object.values(db.stocktakes)) for(const l of st.lines){ const c=CAT[l.cat]; c.fields.forEach(f=>{ if(f.list===listKey && String(l.spec[f.key])===String(value)) n++; }); }
+  return n;
+}
+function openSettingsGate(){
+  if(!db.settings.pin){ openSettings(); return; }
+  const d=openDialog('dlg', dlgShell('dlg','Settings locked','<div class="field"><label for="pin-in">Enter the settings PIN</label><input class="inp" id="pin-in" type="password" inputmode="numeric" autocomplete="off"></div><div class="err" id="pin-err" hidden>That PIN is not correct.</div>',
+    '<button class="btn" type="button" data-close="dlg">Cancel</button><button class="btn btn-primary" type="button" id="pin-ok">Unlock</button>'));
+  const go=()=>{ if($('#pin-in').value===db.settings.pin) openSettings(); else $('#pin-err').hidden=false; };
+  $('#pin-ok').onclick=go; $('#pin-in').addEventListener('keydown',e=>{ if(e.key==='Enter') go(); });
+  setTimeout(()=>$('#pin-in').focus(),0);
+}
+function openSettings(){
+  const L=db.settings.lists;
+  const groups=Object.keys(LIST_META).map(k=>{ const m=LIST_META[k];
+    return '<div class="set-group" data-list="'+k+'"><h4>'+esc(m.label)+'</h4><div class="opts">'+L[k].map((v,i)=>'<span class="opt" data-i="'+i+'"><span>'+esc(fmtVal(k,v))+'</span><button type="button" data-oedit title="Edit" aria-label="Edit '+esc(fmtVal(k,v))+'">✎</button><button type="button" data-odel title="Remove" aria-label="Remove '+esc(fmtVal(k,v))+'">×</button></span>').join('')+'</div>'+
+      '<div class="addrow"><input class="inp" '+(m.numeric?'type="number" inputmode="decimal" step="any" min="0"':'type="text"')+' placeholder="Add '+(m.unit?'value ('+m.unit+')':'option')+'" data-onew><button class="btn btn-sm btn-dark" type="button" data-oadd>Add</button></div><div class="err" data-oerr hidden></div></div>'; }).join('');
+  const body='<div class="field"><label for="set-company">Company name (shown on the Excel summary)</label><input class="inp" id="set-company" value="'+esc(db.settings.company)+'"></div>'+
+    '<p class="hint" style="margin:0">Changes to the lists apply to all stocktakes on this device. Removing an option does not change lines already recorded with it. Renaming an option updates those lines.</p>'+groups+
+    '<div class="set-group"><h4>Settings PIN</h4><p class="hint" style="margin:0">Optional. Stops casual changes to these lists on a shared device. It is a simple lock, not security.</p><div class="addrow"><input class="inp" id="set-pin" type="password" inputmode="numeric" placeholder="'+(db.settings.pin?'PIN is set. Type a new one to change':'Set a PIN')+'" autocomplete="new-password"><button class="btn btn-sm btn-dark" type="button" id="set-pin-save">Save PIN</button>'+(db.settings.pin?'<button class="btn btn-sm" type="button" id="set-pin-clear">Remove</button>':'')+'</div></div>'+
+    '<div class="set-group"><h4>Backup and restore</h4><p class="hint" style="margin:0">Download a backup file of every stocktake and setting on this device, or restore one on another device.</p><div class="actions"><button class="btn btn-sm" type="button" id="bk-down">Download backup (.json)</button><button class="btn btn-sm" type="button" id="bk-up">Restore from backup…</button></div></div>'+
+    '<div class="set-group"><h4>Reset lists</h4><div class="actions"><button class="btn btn-sm btn-danger" type="button" id="set-reset">Restore default lists</button></div></div>';
+  const d=openDialog('dlg', dlgShell('dlg','Settings', body, '<button class="btn btn-primary" type="button" data-close="dlg">Done</button>'));
+  $('#set-company').addEventListener('input', e=>{ db.settings.company=e.target.value; persist(); });
+  $$('.set-group[data-list]', d).forEach(g=>{
+    const k=g.dataset.list, meta=LIST_META[k], err=$('[data-oerr]',g);
+    const showErr=m=>{ err.textContent=m; err.hidden=false; };
+    $('[data-oadd]',g).onclick=()=>{ const inp=$('[data-onew]',g); const r=addListValue(k, inp.value); if(r.error) return showErr(r.error); renderAfterSettings(); openSettings(); toast('Added '+fmtVal(k,r.value)); };
+    $('[data-onew]',g).addEventListener('keydown',e=>{ if(e.key==='Enter') $('[data-oadd]',g).click(); });
+    $$('.opt',g).forEach(o=>{
+      const i=+o.dataset.i, val=db.settings.lists[k][i];
+      $('[data-odel]',o).onclick=async()=>{
+        if(db.settings.lists[k].length<=1){ return showErr('Keep at least one option in this list.'); }
+        const n=usageCount(k,val);
+        const ok=await confirmBox({title:'Remove option?', body:'<p style="margin:0">Remove <b>'+esc(fmtVal(k,val))+'</b> from '+esc(meta.label.toLowerCase())+'?'+(n?' '+n+' recorded line'+(n===1?'':'s')+' use it and will keep the value.':'')+'</p>', ok:'Remove', danger:true});
+        if(!ok) return; db.settings.lists[k].splice(db.settings.lists[k].indexOf(val),1); persist(); renderAfterSettings(); openSettings();
+      };
+      $('[data-oedit]',o).onclick=()=>{
+        o.classList.add('editing');
+        o.innerHTML='<input '+(meta.numeric?'type="number" step="any"':'type="text"')+' value="'+esc(val)+'" aria-label="New value"><button type="button" data-osave title="Save">✓</button><button type="button" data-ocancel title="Cancel">×</button>';
+        const inp=$('input',o); inp.focus(); inp.select();
+        $('[data-ocancel]',o).onclick=()=>openSettings();
+        const save=()=>{
+          let nv=inp.value.trim(); if(!nv) return showErr('Enter a value.');
+          if(meta.numeric){ const n=Number(nv); if(!isFinite(n)||n<=0) return showErr('Enter a number greater than 0.'); if(!meta.decimal&&!Number.isInteger(n)) return showErr('Use a whole number.'); nv=meta.decimal?round2(n):n; }
+          if(String(nv)!==String(val) && db.settings.lists[k].some(x=>String(x).toLowerCase()===String(nv).toLowerCase())) return showErr('That value is already in the list.');
+          const list=db.settings.lists[k]; list[list.indexOf(val)]=nv; if(meta.numeric) list.sort((a,b)=>a-b);
+          let changed=0;
+          for(const st of Object.values(db.stocktakes)) for(const l of st.lines){ CAT[l.cat].fields.forEach(f=>{ if(f.list===k && String(l.spec[f.key])===String(val)){ l.spec[f.key]=nv; changed++; } }); }
+          persist(); renderAfterSettings(); openSettings(); toast('Renamed'+(changed?' and updated '+changed+' line'+(changed===1?'':'s'):''));
+        };
+        $('[data-osave]',o).onclick=save; inp.addEventListener('keydown',e=>{ if(e.key==='Enter') save(); if(e.key==='Escape'){ e.preventDefault(); openSettings(); } });
+      };
+    });
+  });
+  $('#set-pin-save').onclick=()=>{ const v=$('#set-pin').value.trim(); if(v.length<4){ toast('Use at least 4 digits for the PIN', true); return; } db.settings.pin=v; persist(); toast('Settings PIN saved'); openSettings(); };
+  const pc=$('#set-pin-clear'); if(pc) pc.onclick=()=>{ db.settings.pin=''; persist(); toast('Settings PIN removed'); openSettings(); };
+  $('#set-reset').onclick=async()=>{ const ok=await confirmBox({title:'Restore default lists?', body:'<p style="margin:0">Every dropdown list goes back to the standard options. Recorded lines keep their values.</p>', ok:'Restore defaults', danger:true}); if(!ok) return; db.settings.lists=defaultSettings().lists; persist(); renderAfterSettings(); openSettings(); toast('Default lists restored'); };
+  $('#bk-down').onclick=async()=>{ writeNow(); const name='Drainage_Stocktake_Backup_'+todayISO()+'.json'; await deliverFile(name, new Blob([JSON.stringify(db,null,1)],{type:'application/json'})); };
+  $('#bk-up').onclick=()=>{ $('#restore-file').value=''; $('#restore-file').click(); };
+}
+function renderAfterSettings(){ renderFilterOptions(); renderSections(); }
+$('#btn-settings').onclick=openSettingsGate;
+$('#restore-file').addEventListener('change', async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  let data; try{ data=migrate(JSON.parse(await f.text())); }catch(err){ data=null; }
+  if(!data){ toast('That file is not a Drainage Stocktake backup.', true); return; }
+  const n=Object.keys(data.stocktakes).length;
+  const ok=await confirmBox({title:'Restore backup?', body:'<p style="margin:0">Replace everything on this device with the backup ('+n+' stocktake'+(n===1?'':'s')+')? Stocktakes currently on this device that are not in the backup will be lost.</p>', ok:'Replace with backup', danger:true});
+  if(!ok) return; db=data; writeNow(); closeDialog('dlg'); renderAll(); toast('Backup restored');
+});
+
+/* ---------------- File delivery ---------------- */
+let downloadsP = null;
+try{ if(window.claude && typeof window.claude.use==='function') downloadsP = Promise.resolve(window.claude.use('downloads')).catch(()=>null); }catch(e){ downloadsP=null; }
+function framed(){ try{ return window.self!==window.top; }catch(e){ return true; } }
+async function deliverFile(filename, blob){
+  let dl=null;
+  if(downloadsP){ dl = await Promise.race([downloadsP, new Promise(r=>setTimeout(()=>r(null),12000))]); }
+  if(dl && typeof dl.save==='function'){
+    try{ await dl.save({filename, data:blob}); toast('Saved '+filename); return true; }
+    catch(e){ const code=e&&e.code;
+      if(code==='declined'){ toast('Download cancelled'); return false; }
+      if(code==='rate_limited'){ toast('A save prompt is already open. Finish that one first.', true); return false; }
+      toast('Could not save the file here ('+(code||'error')+'). Open the app in a full browser tab and try again.', true); return false; }
+  }
+  try{
+    const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 20000); toast('Downloaded '+filename); return true;
+  }catch(e){ toast('Download failed: '+e.message, true); return false; }
+}
+
+/* ---------------- XLSX writer (Office Open XML via JSZip) — CGC system-generated record style ---------------- */
+function colL(n){ let s=''; n++; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26); } return s; }
+function xesc(s){ return String(s).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function dateSerial(iso){ if(!/^\d{4}-\d{2}-\d{2}$/.test(iso||'')) return null; const [y,m,d]=iso.split('-').map(Number); return (Date.UTC(y,m-1,d)-Date.UTC(1899,11,30))/86400000; }
+/* Style ids, see stylesXml */
+const S={title:1, docref:2, rule:3, sub:4, company:5, bar:6, thead:7, label:8, data:9, v:9, int:10, dec:11, date:12, dmg:13, qtn:17, cell:21, totLabel:22, totInt:23, totDec:24};
+const VARIANT={text:0,int:1,dec:2,date:3};
+const XC={green:'FF1F5A2D', pale:'FFEDF2EE', greyGreen:'FFD8DFDA', border:'FFCBD3CD', blue:'FF2E6DA4', ink:'FF1A1A1A', muted:'FF6B6B6B', white:'FFFFFFFF', dmg:'FFFFE7A8', qtn:'FFF6C9C4'};
+function stylesXml(){
+  const xf=(font,fill,border,numFmt,align)=>'<xf numFmtId="'+numFmt+'" fontId="'+font+'" fillId="'+fill+'" borderId="'+border+'" xfId="0"'+(numFmt?' applyNumberFormat="1"':'')+' applyFont="1" applyFill="1" applyBorder="1"'+(align?' applyAlignment="1"><alignment '+align+'/></xf>':'/>');
+  const body=(fill)=>[xf(6,fill,1,0,'vertical="top" wrapText="1"'), xf(6,fill,1,1,'vertical="top"'), xf(6,fill,1,2,'vertical="top"'), xf(6,fill,1,164,'horizontal="left" vertical="top"')];
+  const xfs=[
+    xf(0,0,0,0,''),                                   /* 0 default */
+    xf(2,0,0,0,'horizontal="right" vertical="center"'),/* 1 title */
+    xf(3,0,2,0,'horizontal="right" vertical="center"'),/* 2 doc ref, on the green rule */
+    xf(0,0,2,0,''),                                   /* 3 green rule blank */
+    xf(3,0,0,0,'vertical="center"'),                  /* 4 sub / info line */
+    xf(7,0,0,0,'vertical="center"'),                  /* 5 company name (when no logo file) */
+    xf(4,2,0,0,'vertical="center" indent="1"'),       /* 6 green section bar */
+    xf(1,3,1,0,'vertical="center" wrapText="1"'),     /* 7 table header, pale green */
+    xf(5,3,1,0,'vertical="top" wrapText="1"'),        /* 8 key-fact label, bold green */
+    ...body(0),                                       /* 9-12 values, Value Blue */
+    ...body(5),                                       /* 13-16 damaged */
+    ...body(6),                                       /* 17-20 quarantined */
+    xf(0,0,1,0,'vertical="top" wrapText="1"'),        /* 21 structural text cell */
+    xf(1,4,3,0,'vertical="center"'), xf(1,4,3,3,'vertical="center"'), xf(1,4,3,2,'vertical="center"') /* 22-24 totals */
+  ];
+  const font=(o)=>'<font>'+(o.b?'<b/>':'')+'<sz val="'+o.sz+'"/><color rgb="'+o.c+'"/><name val="Calibri"/><family val="2"/></font>';
+  const fonts=[{sz:11,c:XC.ink},{b:1,sz:11,c:XC.ink},{b:1,sz:16,c:XC.ink},{sz:9,c:XC.muted},{b:1,sz:11,c:XC.white},{b:1,sz:11,c:XC.green},{sz:11,c:XC.blue},{b:1,sz:14,c:XC.green}];
+  const solid=c=>'<fill><patternFill patternType="solid"><fgColor rgb="'+c+'"/><bgColor indexed="64"/></patternFill></fill>';
+  const side=(n,style,c)=>style?'<'+n+' style="'+style+'"><color rgb="'+c+'"/></'+n+'>':'<'+n+'/>';
+  const border=(l,r,t,b)=>'<border>'+side('left',...l)+side('right',...r)+side('top',...t)+side('bottom',...b)+'<diagonal/></border>';
+  const thin=['thin',XC.border], none=[];
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+  '<numFmts count="1"><numFmt numFmtId="164" formatCode="dd/mm/yyyy"/></numFmts>'+
+  '<fonts count="'+fonts.length+'">'+fonts.map(font).join('')+'</fonts>'+
+  '<fills count="7"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>'+[XC.green,XC.pale,XC.greyGreen,XC.dmg,XC.qtn].map(solid).join('')+'</fills>'+
+  '<borders count="4">'+border(none,none,none,none)+border(thin,thin,thin,thin)+border(none,none,none,['medium',XC.green])+border(thin,thin,['thin',XC.green],thin)+'</borders>'+
+  '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'+
+  '<cellXfs count="'+xfs.length+'">'+xfs.join('')+'</cellXfs>'+
+  '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+}
+function newSheet(name){ return {name, rows:[], cols:[], merges:[], heights:{}, freeze:0, filter:null}; }
+function put(sh,r,c,cell){ (sh.rows[r]=sh.rows[r]||[])[c]=cell; }
+function sheetXml(sh){
+  let x='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">';
+  x+='<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>';
+  const maxC=Math.max(1,sh.cols.length), maxR=Math.max(1,sh.rows.length);
+  x+='<dimension ref="A1:'+colL(maxC-1)+maxR+'"/>';
+  x+='<sheetViews><sheetView showGridLines="0" workbookViewId="0"'+(sh.tabSelected?' tabSelected="1"':'')+'>'+(sh.freeze?'<pane ySplit="'+sh.freeze+'" topLeftCell="A'+(sh.freeze+1)+'" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A'+(sh.freeze+1)+'" sqref="A'+(sh.freeze+1)+'"/>':'')+'</sheetView></sheetViews>';
+  x+='<sheetFormatPr defaultRowHeight="15"/>';
+  x+='<cols>'+sh.cols.map((w,i)=>'<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+w+'" customWidth="1"/>').join('')+'</cols>';
+  x+='<sheetData>';
+  sh.rows.forEach((row,r)=>{
+    if(!row) return;
+    const h=sh.heights[r];
+    x+='<row r="'+(r+1)+'"'+(h?' ht="'+h+'" customHeight="1"':'')+'>';
+    row.forEach((cell,c)=>{
+      if(!cell) return; const ref=colL(c)+(r+1); const s=cell.s?' s="'+cell.s+'"':'';
+      if(cell.f!=null){ x+='<c r="'+ref+'"'+s+'><f>'+xesc(cell.f)+'</f>'+(cell.v!=null&&cell.v!==''?'<v>'+cell.v+'</v>':'')+'</c>'; }
+      else if(cell.v==null||cell.v===''){ x+='<c r="'+ref+'"'+s+'/>'; }
+      else if(typeof cell.v==='number'){ x+='<c r="'+ref+'"'+s+'><v>'+cell.v+'</v></c>'; }
+      else x+='<c r="'+ref+'"'+s+' t="inlineStr"><is><t xml:space="preserve">'+xesc(cell.v)+'</t></is></c>';
+    });
+    x+='</row>';
+  });
+  x+='</sheetData>';
+  if(sh.filter) x+='<autoFilter ref="'+sh.filter+'"/>';
+  if(sh.merges.length) x+='<mergeCells count="'+sh.merges.length+'">'+sh.merges.map(m=>'<mergeCell ref="'+m+'"/>').join('')+'</mergeCells>';
+  x+='<pageMargins left="0.6" right="0.6" top="0.6" bottom="0.6" header="0.3" footer="0.3"/>';
+  x+='<pageSetup paperSize="9" orientation="'+(sh.portrait?'portrait':'landscape')+'" fitToWidth="1" fitToHeight="0"/>';
+  x+='<headerFooter><oddFooter>&amp;L&amp;8&amp;K6B6B6B'+xesc((sh.footer||'').replace(/&/g,'&&'))+'&amp;R&amp;8&amp;K6B6B6B'+xesc((sh.footerRight||'').replace(/&/g,'&&'))+' · Page &amp;P of &amp;N</oddFooter></headerFooter>';
+  if(sh.drawingRel) x+='<drawing r:id="'+sh.drawingRel+'"/>';
+  return x+'</worksheet>';
+}
+/* Brand header: logo (or company name) top-left, bold title top-right with doc reference, green rule, info line */
+function brandHead(sh, title, logo, company, infoLine){
+  const n=sh.cols.length, last=n-1, lc=colL(last);
+  let t=0, w=0; while(t<last && w<30){ w+=sh.cols[t]; t++; }
+  t=Math.max(1,Math.min(t,last));
+  if(!logo) put(sh,0,0,{v:company||'',s:S.company});
+  put(sh,0,t,{v:title,s:S.title}); for(let c=t+1;c<n;c++) put(sh,0,c,{v:'',s:S.title});
+  for(let c=0;c<n;c++) put(sh,1,c,{v:'',s:S.rule});
+  put(sh,1,t,{v:DOC_REF,s:S.docref}); for(let c=t+1;c<n;c++) put(sh,1,c,{v:'',s:S.docref});
+  if(last>t){ sh.merges.push(colL(t)+'1:'+lc+'1', colL(t)+'2:'+lc+'2'); }
+  sh.heights[0]=30; sh.heights[1]=22;
+  put(sh,2,0,{v:infoLine,s:S.sub}); for(let c=1;c<n;c++) put(sh,2,c,{v:'',s:S.sub}); sh.merges.push('A3:'+lc+'3'); sh.heights[2]=20;
+  sh.logo=!!logo;
+}
+/* Full register columns: key, header, width, kind */
+const REG = [
+  ['no','No.',6,'int'],['project','Project Name',24,'text'],['ref','Stocktake Reference',16,'text'],['date','Stocktake Date',13,'date'],
+  ['cat','Material Category',16,'text'],['desc','Material Description',42,'text'],['diameter','Diameter (mm)',11,'int'],['height','Height (mm)',10,'int'],
+  ['angle','Bend Angle (°)',10,'text'],['entry','Entry Configuration',14,'text'],['load','Load Rating',10,'text'],['opener','Opener Configuration',15,'text'],
+  ['material','Material / Type',20,'text'],['length','Pipe Length (m)',10,'dec'],['qty','Quantity on Site',10,'int'],['lm','Total Linear Metres (m)',12,'dec'],
+  ['cond','Condition',13,'text'],['notes','Notes',40,'text']
+];
+const FIELD_HEAD = {diameter:'Diameter (mm)', height:'Height (mm)', angle:'Bend Angle (°)', entry:'Entry Configuration', load:'Load Rating', opener:'Opener Configuration', length:'Pipe Length (m)'};
+const FIELD_KIND = {diameter:'int', height:'int', angle:'text', length:'dec'};
+const FIELD_NUM = {diameter:1, height:1, angle:1, length:1};
+function cellStyle(kind, cond){ const base= cond==='Damaged'? S.dmg : cond==='Quarantined'? S.qtn : S.data; return base+VARIANT[kind]; }
+function numOrBlank(v){ if(v===''||v==null) return ''; const n=Number(v); return isFinite(n)? n : String(v); }
+
+function buildWorkbookParts(st, settings, logo){
+  const d=st.details, s=stats(st);
+  const proj=d.project||'Untitled project';
+  const company=settings.company||'';
+  const dSer=dateSerial(d.date);
+  const genStamp=new Date().toLocaleString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).replace(',','');
+  const footer=[company, proj, d.ref].filter(Boolean).join(' · ');
+  const footerRight='Printed '+genStamp;
+  const ordered=[]; CATS.forEach(c=>st.lines.filter(l=>l.cat===c.key).forEach(l=>ordered.push(l)));
+  const infoLine='Project: '+proj+(d.ref?'   ·   Ref: '+d.ref:'')+'   ·   Date: '+(fmtDate(d.date)||'not set')+(d.location?'   ·   Location: '+d.location:'');
+  const HEAD=4; /* rows 1-3 brand header, row 4 table header */
+
+  /* ---- Full register ---- */
+  const reg=newSheet('Full Stock Register'); reg.footer=footer; reg.footerRight=footerRight;
+  reg.cols=REG.map(c=>c[2]);
+  const nC=REG.length, lastCol=colL(nC-1);
+  brandHead(reg,'Drainage Stocktake: Full Stock Register',logo,company,infoLine);
+  REG.forEach((c,i)=>put(reg,HEAD-1,i,{v:c[1],s:S.thead})); reg.heights[HEAD-1]=32;
+  const colIdx=Object.fromEntries(REG.map((c,i)=>[c[0],i]));
+  ordered.forEach((l,i)=>{
+    const r=HEAD+i, c=CAT[l.cat], row={no:i+1, project:proj, ref:d.ref||'', date:dSer??'', cat:c.singular, desc:describe(l), qty:l.qty, cond:l.condition, notes:l.notes||''};
+    c.fields.forEach(f=>{ const v=l.spec[f.key]; row[f.col]= FIELD_NUM[f.col]? numOrBlank(v) : (v==null?'':String(v)); });
+    REG.forEach(([k,,,kind],ci)=>{
+      if(k==='lm'){ const lm=linearMetres(l); put(reg,r,ci, lm!=null? {f:colL(colIdx.qty)+(r+1)+'*'+colL(colIdx.length)+(r+1), v:lm, s:cellStyle('dec',l.condition)} : {v:'',s:cellStyle('dec',l.condition)}); return; }
+      let v=row[k]; if(v===undefined) v='';
+      const kd = (typeof v==='string' && kind!=='text')? 'text' : kind;
+      put(reg,r,ci,{v, s:cellStyle(kd,l.condition)});
+    });
+  });
+  const firstData=HEAD+1, lastData=HEAD+ordered.length;
+  reg.freeze=HEAD;
+  reg.filter='A'+HEAD+':'+lastCol+(Math.max(HEAD,lastData));
+  const R=(key)=>"'Full Stock Register'!$"+colL(colIdx[key])+'$'+firstData+':$'+colL(colIdx[key])+'$'+lastData;
+  const has=ordered.length>0;
+  { const tr=lastData; /* 0-based index of the row after the data */
+    put(reg,tr,0,{v:'Total',s:S.totLabel}); for(let c=1;c<nC;c++) put(reg,tr,c,{v:'',s:S.totLabel});
+    reg.merges.push('A'+(tr+1)+':'+colL(colIdx.qty-1)+(tr+1));
+    put(reg,tr,colIdx.qty, has? {f:'SUBTOTAL(109,'+colL(colIdx.qty)+firstData+':'+colL(colIdx.qty)+lastData+')', v:s.units, s:S.totInt} : {v:0,s:S.totInt});
+    put(reg,tr,colIdx.lm, has? {f:'SUBTOTAL(109,'+colL(colIdx.lm)+firstData+':'+colL(colIdx.lm)+lastData+')', v:s.lm, s:S.totDec} : {v:0,s:S.totDec});
+  }
+
+  /* ---- Summary ---- */
+  const sum=newSheet('Stocktake Summary'); sum.footer=footer; sum.footerRight=footerRight; sum.portrait=true; sum.tabSelected=true;
+  sum.cols=[32,16,18,22];
+  brandHead(sum,'Drainage Stocktake Summary',logo,company,'Generated '+genStamp+' from the Drainage Stocktake app');
+  let r=3;
+  const gapRow=()=>{ sum.heights[r]=8; r++; };
+  const bar=(text)=>{ put(sum,r,0,{v:text.toUpperCase(),s:S.bar}); for(let c=1;c<4;c++) put(sum,r,c,{v:'',s:S.bar}); sum.merges.push('A'+(r+1)+':D'+(r+1)); sum.heights[r]=20; r++; };
+  gapRow(); bar('Stocktake details');
+  const kv=(label, cell)=>{ put(sum,r,0,{v:label,s:S.label}); put(sum,r,1,cell); put(sum,r,2,{v:'',s:cell.s}); put(sum,r,3,{v:'',s:cell.s}); sum.merges.push('B'+(r+1)+':D'+(r+1)); r++; };
+  kv('Company', {v:company,s:S.v});
+  kv('Project / Site Name', {v:d.project||'',s:S.v});
+  kv('Site Location', {v:d.location||'',s:S.v});
+  kv('Stocktake Reference', {v:d.ref||'',s:S.v});
+  kv('Stocktake Date', dSer!=null? {v:dSer,s:S.date} : {v:'',s:S.v});
+  kv('Completed By', {v:d.completedBy||'',s:S.v});
+  kv('Checked By', {v:d.checkedBy||'',s:S.v});
+  gapRow(); bar('Totals');
+  const kn=(label, f, v, style)=>{ put(sum,r,0,{v:label,s:S.label}); put(sum,r,1, has&&f? {f, v, s:style||S.int} : {v, s:style||S.int}); r++; };
+  kn('Total stock lines', 'COUNTA('+R('cat')+')', s.lines);
+  kn('Total units on site', 'SUM('+R('qty')+')', s.units);
+  kn('Good units', 'SUMIF('+R('cond')+',"Good",'+R('qty')+')', s.units-s.damaged-s.quarantined);
+  kn('Damaged units', 'SUMIF('+R('cond')+',"Damaged",'+R('qty')+')', s.damaged);
+  kn('Quarantined units', 'SUMIF('+R('cond')+',"Quarantined",'+R('qty')+')', s.quarantined);
+  kn('Pipework linear metres (m)', 'SUM('+R('lm')+')', s.lm, S.dec);
+  gapRow(); bar('Totals by material category');
+  ['Material Category','Stock Lines','Total Quantity','Linear Metres (m)'].forEach((h,i)=>put(sum,r,i,{v:h,s:S.thead})); sum.heights[r]=20; r++;
+  const catStart=r;
+  CATS.forEach(c=>{ const b=s.by[c.key];
+    put(sum,r,0,{v:c.name,s:S.cell});
+    put(sum,r,1, has? {f:'COUNTIF('+R('cat')+',"'+c.singular+'")', v:b.lines, s:S.int} : {v:0,s:S.int});
+    put(sum,r,2, has? {f:'SUMIF('+R('cat')+',"'+c.singular+'",'+R('qty')+')', v:b.qty, s:S.int} : {v:0,s:S.int});
+    put(sum,r,3, c.key==='pipework'? (has? {f:'SUMIF('+R('cat')+',"'+c.singular+'",'+R('lm')+')', v:round2(b.lm), s:S.dec} : {v:0,s:S.dec}) : {v:'',s:S.cell});
+    r++; });
+  put(sum,r,0,{v:'Total',s:S.totLabel});
+  put(sum,r,1,{f:'SUM(B'+(catStart+1)+':B'+r+')', v:s.lines, s:S.totInt});
+  put(sum,r,2,{f:'SUM(C'+(catStart+1)+':C'+r+')', v:s.units, s:S.totInt});
+  put(sum,r,3,{f:'SUM(D'+(catStart+1)+':D'+r+')', v:s.lm, s:S.totDec}); r++;
+  gapRow(); bar('Notes / Comments');
+  put(sum,r,0,{v:d.notes||'None recorded',s:S.v}); for(let c=1;c<4;c++) put(sum,r,c,{v:'',s:S.v}); sum.merges.push('A'+(r+1)+':D'+(r+1));
+  const noteLines=(d.notes||'').split('\n').reduce((n,ln)=>n+Math.max(1,Math.ceil(ln.length/80)),0);
+  sum.heights[r]=Math.min(400,Math.max(30,noteLines*15+6)); r++;
+  if(s.damaged||s.quarantined){ put(sum,r,0,{v:'Damaged lines are highlighted amber and quarantined lines red on the stock registers.',s:S.sub}); sum.merges.push('A'+(r+1)+':D'+(r+1)); r++; }
+
+  /* ---- Category sheets ---- */
+  const catSheets=CATS.map(c=>{
+    const sh=newSheet(c.name); sh.footer=footer; sh.footerRight=footerRight;
+    const cols=[['no','No.',6,'int'],['desc','Material Description',42,'text']];
+    c.fields.forEach(f=>cols.push([f.key, (f.col==='diameter'&&/Manhole/.test(f.label))? 'Manhole Diameter (mm)' : (FIELD_HEAD[f.col]||f.label), FIELD_NUM[f.col]?12:Math.max(16,f.label.length+2), FIELD_KIND[f.col]||'text', f.col]));
+    cols.push(['qty','Quantity on Site',11,'int']);
+    if(c.key==='pipework') cols.push(['lm','Total Linear Metres (m)',13,'dec']);
+    cols.push(['cond','Condition',13,'text'],['notes','Notes',40,'text']);
+    sh.cols=cols.map(x=>x[2]);
+    const n=cols.length, lc=colL(n-1);
+    brandHead(sh,'Drainage Stocktake: '+c.name,logo,company,infoLine);
+    cols.forEach((x,i)=>put(sh,HEAD-1,i,{v:x[1],s:S.thead})); sh.heights[HEAD-1]=32;
+    const ls=ordered.filter(l=>l.cat===c.key);
+    const ci=Object.fromEntries(cols.map((x,i)=>[x[0],i]));
+    ls.forEach((l,i)=>{ const rr=HEAD+i;
+      cols.forEach(([k,,,kind,fcol],cx)=>{
+        let v;
+        if(k==='no') v=i+1; else if(k==='desc') v=describe(l); else if(k==='qty') v=l.qty; else if(k==='cond') v=l.condition; else if(k==='notes') v=l.notes||'';
+        else if(k==='lm'){ const lm=linearMetres(l); put(sh,rr,cx, lm!=null? {f:colL(ci.qty)+(rr+1)+'*'+colL(ci.length)+(rr+1), v:lm, s:cellStyle('dec',l.condition)} : {v:'',s:cellStyle('dec',l.condition)}); return; }
+        else { const raw=l.spec[k]; v= FIELD_NUM[fcol]? numOrBlank(raw) : (raw==null?'':String(raw)); }
+        const kd=(typeof v==='string'&&kind!=='text')?'text':kind;
+        put(sh,rr,cx,{v, s:cellStyle(kd,l.condition)});
+      });
+    });
+    const ld=HEAD+ls.length;
+    sh.freeze=HEAD; sh.filter='A'+HEAD+':'+lc+Math.max(HEAD,ld);
+    put(sh,ld,0,{v:ls.length?'Total':'No '+c.name.toLowerCase()+' recorded',s:S.totLabel}); for(let i=1;i<n;i++) put(sh,ld,i,{v:'',s:S.totLabel});
+    sh.merges.push('A'+(ld+1)+':'+colL(ci.qty-1)+(ld+1));
+    const b=s.by[c.key];
+    put(sh,ld,ci.qty, ls.length? {f:'SUBTOTAL(109,'+colL(ci.qty)+(HEAD+1)+':'+colL(ci.qty)+ld+')', v:b.qty, s:S.totInt} : {v:0,s:S.totInt});
+    if(ci.lm!=null) put(sh,ld,ci.lm, ls.length? {f:'SUBTOTAL(109,'+colL(ci.lm)+(HEAD+1)+':'+colL(ci.lm)+ld+')', v:round2(b.lm), s:S.totDec} : {v:0,s:S.totDec});
+    return sh;
+  });
+  return [sum, reg, ...catSheets];
+}
+
+/* Company logo: loaded from logo.png next to index.html (same folder in the GitHub repo). Optional. */
+const LOGO_URL='logo.png';
+let logoP=null;
+function getLogo(){
+  if(!logoP) logoP=(async()=>{
+    try{
+      const r=await fetch(LOGO_URL,{cache:'force-cache'}); if(!r.ok) return null;
+      const blob=await r.blob(); const buf=await blob.arrayBuffer(); const u=new Uint8Array(buf);
+      const isPng=u[0]===0x89&&u[1]===0x50, isJpg=u[0]===0xFF&&u[1]===0xD8; if(!isPng&&!isJpg) return null;
+      const bmp=await createImageBitmap(blob); const out={buf, w:bmp.width, h:bmp.height, ext:isPng?'png':'jpeg'}; if(bmp.close) bmp.close(); return out;
+    }catch(e){ return null; }
+  })();
+  return logoP;
+}
+function drawingXml(logo){
+  const hPx=58, wPx=Math.round(hPx*logo.w/logo.h), E=9525;
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">'+
+  '<xdr:oneCellAnchor><xdr:from><xdr:col>0</xdr:col><xdr:colOff>'+(4*E)+'</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>'+(3*E)+'</xdr:rowOff></xdr:from><xdr:ext cx="'+(wPx*E)+'" cy="'+(hPx*E)+'"/>'+
+  '<xdr:pic><xdr:nvPicPr><xdr:cNvPr id="2" name="Cheltenham Green Civils logo" descr="Cheltenham Green Civils"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr>'+
+  '<xdr:blipFill><a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>'+
+  '<xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+(wPx*E)+'" cy="'+(hPx*E)+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor></xdr:wsDr>';
+}
+
+async function buildWorkbook(st, settings){
+  if(typeof JSZip==='undefined') throw new Error('The Excel library has not loaded. Check the internet connection and reload the page.');
+  const logo=await getLogo();
+  const sheets=buildWorkbookParts(st, settings, logo);
+  const zip=new JSZip();
+  const REL='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+  let ov=sheets.map((s,i)=>'<Override PartName="/xl/worksheets/sheet'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>').join('');
+  if(logo){
+    zip.file('xl/media/logo.'+logo.ext, logo.buf);
+    sheets.forEach((s,i)=>{
+      s.drawingRel='rId1';
+      zip.file('xl/drawings/drawing'+(i+1)+'.xml', drawingXml(logo));
+      zip.file('xl/drawings/_rels/drawing'+(i+1)+'.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="'+REL+'/image" Target="../media/logo.'+logo.ext+'"/></Relationships>');
+      zip.file('xl/worksheets/_rels/sheet'+(i+1)+'.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="'+REL+'/drawing" Target="../drawings/drawing'+(i+1)+'.xml"/></Relationships>');
+      ov+='<Override PartName="/xl/drawings/drawing'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>';
+    });
+  }
+  zip.file('[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Default Extension="jpeg" ContentType="image/jpeg"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+ov+'<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>');
+  zip.file('_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="'+REL+'/officeDocument" Target="xl/workbook.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="'+REL+'/extended-properties" Target="docProps/app.xml"/></Relationships>');
+  const now=new Date().toISOString().replace(/\.\d+Z$/,'Z');
+  zip.file('docProps/core.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>'+xesc('Drainage Stocktake '+(st.details.project||''))+'</dc:title><dc:subject>'+xesc(DOC_REF)+'</dc:subject><dc:creator>'+xesc(st.details.completedBy||settings.company||'Drainage Stocktake')+'</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">'+now+'</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">'+now+'</dcterms:modified></cp:coreProperties>');
+  zip.file('docProps/app.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Microsoft Excel</Application><Company>'+xesc(settings.company||'')+'</Company></Properties>');
+  const defs=[]; sheets.forEach((s,i)=>{ if(s.filter) defs.push('<definedName name="_xlnm._FilterDatabase" localSheetId="'+i+'" hidden="1">\''+xesc(s.name)+'\'!'+s.filter.replace(/([A-Z]+)(\d+)/g,'$$$1$$$2')+'</definedName>'); });
+  zip.file('xl/workbook.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="'+REL+'"><bookViews><workbookView activeTab="0"/></bookViews><sheets>'+sheets.map((s,i)=>'<sheet name="'+xesc(s.name)+'" sheetId="'+(i+1)+'" r:id="rId'+(i+1)+'"/>').join('')+'</sheets>'+(defs.length?'<definedNames>'+defs.join('')+'</definedNames>':'')+'<calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>');
+  zip.file('xl/_rels/workbook.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+sheets.map((s,i)=>'<Relationship Id="rId'+(i+1)+'" Type="'+REL+'/worksheet" Target="worksheets/sheet'+(i+1)+'.xml"/>').join('')+'<Relationship Id="rId'+(sheets.length+1)+'" Type="'+REL+'/styles" Target="styles.xml"/></Relationships>');
+  zip.file('xl/styles.xml', stylesXml());
+  sheets.forEach((s,i)=>zip.file('xl/worksheets/sheet'+(i+1)+'.xml', sheetXml(s)));
+  return zip.generateAsync({type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', compression:'DEFLATE'});
+}
+
+function exportFilename(st){
+  const p=(st.details.project||'Untitled').normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9-]+/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'').slice(0,60)||'Untitled';
+  const dt=/^\d{4}-\d{2}-\d{2}$/.test(st.details.date||'')? st.details.date : todayISO();
+  return 'Drainage_Stocktake_'+p+'_'+dt+'.xlsx';
+}
+$('#btn-export').onclick=async()=>{
+  const b=$('#btn-export'); if(b.disabled) return;
+  if(saveTimer) writeNow();
+  const st=cur();
+  if(!st.lines.length){ const ok=await confirmBox({title:'Export an empty stocktake?', body:'<p style="margin:0">No stock lines have been recorded yet. The workbook will contain headings only.</p>', ok:'Export anyway'}); if(!ok) return; }
+  b.disabled=true; const old=b.innerHTML; b.lastChild.textContent=' Building workbook…';
+  try{ const blob=await buildWorkbook(st, db.settings); await deliverFile(exportFilename(st), blob); }
+  catch(e){ toast(e.message||'Export failed', true); }
+  finally{ b.disabled=false; b.innerHTML=old; }
+};
+window.__stocktake = { buildWorkbook, buildWorkbookParts, exportFilename, stats, get db(){return db;} };
+
+/* ---------------- Print ---------------- */
+function buildPrint(){
+  const st=cur(), d=st.details, s=stats(st);
+  const ordered=[]; CATS.forEach(c=>st.lines.filter(l=>l.cat===c.key).forEach(l=>ordered.push(l)));
+  const row=(k,v)=>'<tr><th>'+esc(k)+'</th><td>'+esc(v||'')+'</td></tr>';
+  const logoOK=!$('#logo-img').hidden;
+  const printed=new Date().toLocaleString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).replace(',','');
+  $('#print-area').innerHTML='<div class="p-head"><div>'+(logoOK?'<img src="'+esc($('#logo-img').currentSrc||'logo.png')+'" alt="Cheltenham Green Civils">':'<b>'+esc(db.settings.company||'')+'</b>')+'</div><div class="p-title"><h1>Drainage Stocktake Summary</h1><div>'+esc(DOC_REF)+'</div></div></div><div class="p-rule"></div>'+
+   '<h2>Stocktake details</h2><table class="kf">'+row('Project / Site Name',d.project)+row('Site Location',d.location)+row('Stocktake Reference',d.ref)+row('Stocktake Date',fmtDate(d.date))+row('Completed By',d.completedBy)+row('Checked By',d.checkedBy)+row('Notes / Comments',d.notes)+'</table>'+
+   '<h2>Totals by material category</h2><table><tr><th>Material Category</th><th class="r">Stock Lines</th><th class="r">Total Quantity</th></tr>'+CATS.map(c=>'<tr><th style="background:#fff;font-weight:400">'+esc(c.name)+'</th><td class="r">'+s.by[c.key].lines+'</td><td class="r">'+s.by[c.key].qty+'</td></tr>').join('')+
+   '<tr><th>Total</th><th class="r">'+s.lines+'</th><th class="r">'+s.units+'</th></tr></table><p>Damaged units: <b>'+s.damaged+'</b> · Quarantined units: <b>'+s.quarantined+'</b> · Pipework linear metres: <b>'+nf2.format(s.lm)+' m</b></p>'+
+   '<h2>Stock register</h2><table><tr><th>No.</th><th>Category</th><th>Description</th><th class="r">Qty</th><th>Condition</th><th>Notes</th></tr>'+
+   ordered.map((l,i)=>'<tr class="'+(l.condition==='Damaged'?'dmg':l.condition==='Quarantined'?'qtn':'')+'"><td>'+(i+1)+'</td><td>'+esc(CAT[l.cat].singular)+'</td><td>'+esc(describe(l))+'</td><td class="r">'+l.qty+'</td><td>'+l.condition+'</td><td>'+esc(l.notes)+'</td></tr>').join('')+'</table>'+
+   '<div class="sig"><div>Completed by: '+esc(d.completedBy||'')+'</div><div>Checked by: '+esc(d.checkedBy||'')+'</div><div>Date:</div></div>'+
+   '<div class="p-foot"><span>'+esc([db.settings.company,d.project,d.ref].filter(Boolean).join(' · '))+'</span><span>Printed '+esc(printed)+'</span></div>';
+}
+if(framed()) $('#btn-print').hidden=true;
+$('#btn-print').onclick=()=>{ buildPrint(); window.print(); };
+window.addEventListener('beforeprint', buildPrint);
+
+/* ---------------- Boot ---------------- */
+(function(){ const img=$('#logo-img'), fb=$('#logo-fallback');
+  const fail=()=>{ img.hidden=true; fb.textContent=db.settings.company||'Cheltenham Green Civils'; fb.hidden=false; };
+  img.addEventListener('error', fail); if(img.complete && !img.naturalWidth) fail(); })();
+$('#doc-ref').textContent=DOC_REF;
+renderAll();
+if(!storageOK) setSaveState('error','Not saved: browser storage blocked');
+else { try{ if(!localStorage.getItem(STORE_KEY)) writeNow(); else setSaveState('saved','Saved on this device'); }catch(e){} }
+})();
+</script>
+
+</body>
+</html>
