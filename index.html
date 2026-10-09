@@ -342,6 +342,7 @@ const LIST_META = {
   manholeHeights:{label:'Manhole heights', unit:'mm', numeric:true, def:[250,500,750,1000]},
   pipeDiameters:{label:'Pipe diameters (pipework, bends and seals)', unit:'mm', numeric:true, def:pipeSizes()},
   pipeMaterials:{label:'Pipe materials / types', def:['Concrete','Plastic','Clay','Other']},
+  plasticWallTypes:{label:'Plastic pipe wall types', def:['Smooth','Twinwall']},
   pipeLengths:{label:'Standard pipe lengths', unit:'m', numeric:true, decimal:true, def:[1,1.6,2,2.5,3,6]},
   bendAngles:{label:'Bend angles', unit:'°', numeric:true, decimal:true, def:[15,30,45,90]},
   bendMaterials:{label:'Bend materials / types', def:['Concrete','Plastic','Clay','Other']},
@@ -361,6 +362,7 @@ const CATS = [
   {key:'pipework', name:'Pipework', singular:'Pipework', add:'Add pipework', fields:[
     {key:'diameter', label:'Pipe Diameter', list:'pipeDiameters', col:'diameter'},
     {key:'material', label:'Pipe Material / Type', list:'pipeMaterials', col:'material'},
+    {key:'wall', label:'Plastic Wall Type', list:'plasticWallTypes', col:'wall', showIf:s=>isPlastic(s.material)},
     {key:'length', label:'Pipe Length', list:'pipeLengths', col:'length', optional:true, custom:true}]},
   {key:'bends', name:'Drainage Bends', singular:'Drainage Bend', add:'Add bend', fields:[
     {key:'diameter', label:'Pipe Diameter', list:'pipeDiameters', col:'diameter'},
@@ -380,6 +382,8 @@ const CATS = [
     {key:'type', label:'Cover Type / Specification', list:'coverTypes', col:'material', optional:true}]}
 ];
 const CAT = Object.fromEntries(CATS.map(c=>[c.key,c]));
+/* Wall type (smooth / twinwall) only applies to plastic pipe */
+function isPlastic(v){ return /plastic|pvc|polypropylene|hdpe|\bpp\b/i.test(String(v||'')); }
 
 /* ---------------- Helpers ---------------- */
 const $ = (s,r=document)=>r.querySelector(s);
@@ -403,7 +407,7 @@ function describe(line){
   const s=line.spec||{}, c=line.cat;
   const parts=[];
   if(c==='manholes'){ parts.push(fmtVal('manholeDiameters',s.diameter)+' dia', fmtVal('manholeHeights',s.height)+' height'); }
-  else if(c==='pipework'){ parts.push(fmtVal('pipeDiameters',s.diameter)+' dia'); if(s.material) parts.push(s.material); if(s.length!==''&&s.length!=null) parts.push(fmtVal('pipeLengths',s.length)+' lengths'); }
+  else if(c==='pipework'){ parts.push(fmtVal('pipeDiameters',s.diameter)+' dia'); if(s.material) parts.push(s.material+(s.wall&&isPlastic(s.material)?' ('+s.wall+')':'')); if(s.length!==''&&s.length!=null) parts.push(fmtVal('pipeLengths',s.length)+' lengths'); }
   else if(c==='bends'){ parts.push(fmtVal('pipeDiameters',s.diameter)+' dia', fmtVal('bendAngles',s.angle)); if(s.material) parts.push(s.material); }
   else if(c==='seals'){ parts.push(fmtVal('pipeDiameters',s.diameter)+' dia'); if(s.type) parts.push(s.type); }
   else if(c==='slabs'){ parts.push('For '+fmtVal('manholeDiameters',s.diameter)+' manhole', s.entry); if(s.type) parts.push(s.type); }
@@ -440,7 +444,7 @@ function sampleStocktake(){
     L('manholes',{diameter:1500,height:500},8),
     L('manholes',{diameter:1200,height:250},6),
     L('manholes',{diameter:1200,height:500},1,'Damaged','Cracked joint, supplier notified'),
-    L('pipework',{diameter:150,material:'Plastic',length:6},24),
+    L('pipework',{diameter:150,material:'Plastic',wall:'Twinwall',length:6},24),
     L('pipework',{diameter:225,material:'Concrete',length:2.5},12),
     L('bends',{diameter:150,angle:45,material:'Plastic'},12),
     L('seals',{diameter:225,type:'Pipe joint seal'},20),
@@ -709,7 +713,7 @@ function fieldHTML(f, value){
   if(!found && value!=='' && value!=null && !f.custom){ opts+='<option value="'+esc(value)+'" selected>'+esc(optionLabel(f.list,value))+' (not in list)</option>'; }
   if(f.custom) opts+='<option value="__custom__"'+(isCustom?' selected':'')+'>Custom length…</option>';
   opts+='<option value="__add__">+ Add new '+(meta.unit?'size':'option')+' to list…</option>';
-  return '<div class="field"><label for="'+id+'">'+esc(f.label)+(f.optional?' <span class="hint">(optional)</span>':'')+(meta.unit?' <span class="hint">('+meta.unit+')</span>':'')+'</label>'+
+  return '<div class="field" data-fwrap="'+f.key+'"><label for="'+id+'">'+esc(f.label)+(f.optional?' <span class="hint">(optional)</span>':'')+(meta.unit?' <span class="hint">('+meta.unit+')</span>':'')+'</label>'+
     '<select class="inp" id="'+id+'" data-field="'+f.key+'">'+opts+'</select>'+
     (f.custom?'<div class="addrow" id="'+id+'-custom"'+(isCustom?'':' hidden')+'><input class="inp" type="number" inputmode="decimal" min="0.01" step="0.01" id="'+id+'-cv" placeholder="Length in metres" value="'+(isCustom?esc(value):'')+'"></div>':'')+
     '<div class="addrow" id="'+id+'-add" hidden><input class="inp" id="'+id+'-av" '+(meta.numeric?'type="number" inputmode="decimal" min="0" step="any"':'type="text"')+' placeholder="New '+(meta.unit?'value in '+meta.unit:'option')+'"><button class="btn btn-sm btn-dark" type="button" data-addopt="'+f.key+'">Add</button></div>'+
@@ -759,13 +763,18 @@ function openLineDialog(catKey, {line=null, prefill=null}={}){
   qtyInp.addEventListener('blur', ()=>{ if(qtyInp.value==='') qtyInp.value='0'; updMinus(); });
 
   c.fields.forEach(f=>rebind(f));
+  applyShowIf();
+  function applyShowIf(){
+    const sp=readSpec(true);
+    c.fields.forEach(f=>{ if(!f.showIf) return; const w=$('[data-fwrap="'+f.key+'"]', d); if(w) w.hidden=!f.showIf(sp); });
+  }
   function rebind(f){
     const sel=$('#lf-'+f.key); sel.dataset.prev=sel.value;
     sel.addEventListener('change', ()=>{
       $('#lf-'+f.key+'-err').hidden=true;
       if(sel.value==='__add__'){ $('#lf-'+f.key+'-add').hidden=false; $('#lf-'+f.key+'-av').focus(); sel.value=sel.dataset.prev; return; }
       if(f.custom){ const box=$('#lf-'+f.key+'-custom'); box.hidden = sel.value!=='__custom__'; }
-      sel.dataset.prev=sel.value; updLm();
+      sel.dataset.prev=sel.value; updLm(); applyShowIf();
     });
     if(f.custom) $('#lf-'+f.key+'-cv').addEventListener('input', updLm);
     const ab=$('[data-addopt="'+f.key+'"]', d);
@@ -773,7 +782,7 @@ function openLineDialog(catKey, {line=null, prefill=null}={}){
       const inp=$('#lf-'+f.key+'-av'), err=$('#lf-'+f.key+'-err');
       const r=addListValue(f.list, inp.value);
       if(r.error && r.value===undefined){ err.textContent=r.error; err.hidden=false; return; }
-      ab.closest('.field').outerHTML=fieldHTML(f, r.value); rebind(f);
+      ab.closest('.field').outerHTML=fieldHTML(f, r.value); rebind(f); applyShowIf();
       toast(r.error? r.error+' Selected it for you.' : 'Added '+optionLabel(f.list,r.value)+' to the list');
       renderFilterOptions();
     };
@@ -782,6 +791,7 @@ function openLineDialog(catKey, {line=null, prefill=null}={}){
     const out={}; let ok=true;
     c.fields.forEach(f=>{
       const sel=$('#lf-'+f.key); let v=sel.value; const meta=LIST_META[f.list];
+      if(f.showIf && !f.showIf(out)){ out[f.key]=''; return; }
       if(v==='__custom__'){ const n=Number($('#lf-'+f.key+'-cv').value); if(!(isFinite(n)&&n>0)){ if(!loose){ const e=$('#lf-'+f.key+'-err'); e.textContent='Enter a length in metres greater than 0.'; e.hidden=false; ok=false; } v=''; } else v=round2(n); }
       else if(v==='__add__') v='';
       else if(v!=='' && meta.numeric) v=Number(v);
@@ -974,7 +984,7 @@ function colL(n){ let s=''; n++; while(n>0){ const m=(n-1)%26; s=String.fromChar
 function xesc(s){ return String(s).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function dateSerial(iso){ if(!/^\d{4}-\d{2}-\d{2}$/.test(iso||'')) return null; const [y,m,d]=iso.split('-').map(Number); return (Date.UTC(y,m-1,d)-Date.UTC(1899,11,30))/86400000; }
 /* Style ids, see stylesXml */
-const S={title:1, docref:2, rule:3, sub:4, company:5, bar:6, thead:7, label:8, data:9, v:9, int:10, dec:11, date:12, dmg:13, qtn:17, cell:21, totLabel:22, totInt:23, totDec:24};
+const S={title:1, docref:2, rule:3, sub:4, company:5, bar:6, thead:7, label:8, data:9, v:9, int:10, dec:11, date:12, dmg:13, qtn:17, cell:21, totLabel:22, totInt:23, totDec:24, mx:25, mxTot:26, mxSum:27, theadC:28};
 const VARIANT={text:0,int:1,dec:2,date:3};
 const XC={green:'FF1F5A2D', pale:'FFEDF2EE', greyGreen:'FFD8DFDA', border:'FFCBD3CD', blue:'FF2E6DA4', ink:'FF1A1A1A', muted:'FF6B6B6B', white:'FFFFFFFF', dmg:'FFFFE7A8', qtn:'FFF6C9C4'};
 function stylesXml(){
@@ -994,7 +1004,11 @@ function stylesXml(){
     ...body(5),                                       /* 13-16 damaged */
     ...body(6),                                       /* 17-20 quarantined */
     xf(0,0,1,0,'vertical="top" wrapText="1"'),        /* 21 structural text cell */
-    xf(1,4,3,0,'vertical="center"'), xf(1,4,3,3,'vertical="center"'), xf(1,4,3,2,'vertical="center"') /* 22-24 totals */
+    xf(1,4,3,0,'vertical="center"'), xf(1,4,3,3,'vertical="center"'), xf(1,4,3,2,'vertical="center"'), /* 22-24 totals */
+    xf(6,0,1,165,'horizontal="center" vertical="center"'),  /* 25 size matrix value (zero shows as a dash) */
+    xf(1,3,1,165,'horizontal="center" vertical="center"'),  /* 26 size matrix row total */
+    xf(1,4,3,165,'horizontal="center" vertical="center"'),  /* 27 size matrix column totals */
+    xf(1,3,1,0,'horizontal="center" vertical="center" wrapText="1"') /* 28 centred table header */
   ];
   const font=(o)=>'<font>'+(o.b?'<b/>':'')+'<sz val="'+o.sz+'"/><color rgb="'+o.c+'"/><name val="Calibri"/><family val="2"/></font>';
   const fonts=[{sz:11,c:XC.ink},{b:1,sz:11,c:XC.ink},{b:1,sz:16,c:XC.ink},{sz:9,c:XC.muted},{b:1,sz:11,c:XC.white},{b:1,sz:11,c:XC.green},{sz:11,c:XC.blue},{b:1,sz:14,c:XC.green}];
@@ -1003,7 +1017,7 @@ function stylesXml(){
   const border=(l,r,t,b)=>'<border>'+side('left',...l)+side('right',...r)+side('top',...t)+side('bottom',...b)+'<diagonal/></border>';
   const thin=['thin',XC.border], none=[];
   return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
-  '<numFmts count="1"><numFmt numFmtId="164" formatCode="dd/mm/yyyy"/></numFmts>'+
+  '<numFmts count="2"><numFmt numFmtId="164" formatCode="dd/mm/yyyy"/><numFmt numFmtId="165" formatCode="#,##0;-#,##0;&quot;–&quot;"/></numFmts>'+
   '<fonts count="'+fonts.length+'">'+fonts.map(font).join('')+'</fonts>'+
   '<fills count="7"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>'+[XC.green,XC.pale,XC.greyGreen,XC.dmg,XC.qtn].map(solid).join('')+'</fills>'+
   '<borders count="4">'+border(none,none,none,none)+border(thin,thin,thin,thin)+border(none,none,none,['medium',XC.green])+border(thin,thin,['thin',XC.green],thin)+'</borders>'+
@@ -1063,7 +1077,7 @@ const REG = [
   ['no','No.',6,'int'],['project','Project Name',24,'text'],['ref','Stocktake Reference',16,'text'],['date','Stocktake Date',13,'date'],
   ['cat','Material Category',16,'text'],['desc','Material Description',42,'text'],['diameter','Diameter (mm)',11,'int'],['height','Height (mm)',10,'int'],
   ['angle','Bend Angle (°)',10,'text'],['entry','Entry Configuration',14,'text'],['load','Load Rating',10,'text'],['opener','Opener Configuration',15,'text'],
-  ['material','Material / Type',20,'text'],['length','Pipe Length (m)',10,'dec'],['qty','Quantity on Site',10,'int'],['lm','Total Linear Metres (m)',12,'dec'],
+  ['material','Material / Type',20,'text'],['wall','Plastic Wall Type',12,'text'],['length','Pipe Length (m)',10,'dec'],['qty','Quantity on Site',10,'int'],['lm','Total Linear Metres (m)',12,'dec'],
   ['cond','Condition',13,'text'],['notes','Notes',40,'text']
 ];
 const FIELD_HEAD = {diameter:'Diameter (mm)', height:'Height (mm)', angle:'Bend Angle (°)', entry:'Entry Configuration', load:'Load Rating', opener:'Opener Configuration', length:'Pipe Length (m)'};
@@ -1189,7 +1203,80 @@ function buildWorkbookParts(st, settings, logo){
     if(ci.lm!=null) put(sh,ld,ci.lm, ls.length? {f:'SUBTOTAL(109,'+colL(ci.lm)+(HEAD+1)+':'+colL(ci.lm)+ld+')', v:round2(b.lm), s:S.totDec} : {v:0,s:S.totDec});
     return sh;
   });
-  return [sum, reg, ...catSheets];
+  const sizeSh=buildSizeSheet({ordered, R, has, logo, company, infoLine, footer, footerRight});
+  return [sum, sizeSh, reg, ...catSheets];
+}
+
+
+/* ---- Size Breakdown sheet: per category, one row per size, columns for the spec that varies within a size ---- */
+const SIZE_DEFS = [
+  {cat:'manholes', title:'Manholes by diameter and height', rowKey:'diameter', rowHead:'Manhole Diameter', colKeys:['height'], colLabel:v=>v[0]===''?'Height not recorded':fmtVal('manholeHeights',v[0])+' high'},
+  {cat:'pipework', title:'Pipework by diameter and material', rowKey:'diameter', rowHead:'Pipe Diameter', colKeys:['material','wall'], colLabel:v=>v[0]? v[0]+(v[1]?' ('+v[1]+')':'') : 'Material not recorded', lm:true, unitNote:'Quantities are numbers of pipes'},
+  {cat:'bends', title:'Drainage bends by diameter and angle', rowKey:'diameter', rowHead:'Bend Diameter', colKeys:['angle'], colLabel:v=>v[0]===''?'Angle not recorded':fmtVal('bendAngles',v[0])},
+  {cat:'seals', title:'Rubber seals by diameter and type', rowKey:'diameter', rowHead:'Seal Diameter', colKeys:['type'], colLabel:v=>v[0]||'Type not specified'},
+  {cat:'slabs', title:'Cover slabs by manhole diameter and entry', rowKey:'diameter', rowHead:'Manhole Diameter', colKeys:['entry'], colLabel:v=>v[0]||'Entry not recorded'},
+  {cat:'lids', title:'Manhole lids by manhole diameter and rating', rowKey:'diameter', rowHead:'Manhole Diameter', colKeys:['load','opener'], colLabel:v=>v.filter(Boolean).join(' · ')||'Not specified'}
+];
+function sizeVal(v){ if(v===''||v==null) return ''; const n=Number(v); return isFinite(n)&&String(v).trim()!==''&&typeof v!=='boolean'? n : String(v); }
+function cmpVals(a,b){ if(a===''&&b!=='') return 1; if(b===''&&a!=='') return -1; if(typeof a==='number'&&typeof b==='number') return a-b; return String(a).localeCompare(String(b)); }
+function critOf(v){ if(v==='') return '"="'; if(typeof v==='number') return String(v); return '"='+String(v).replace(/[~*?]/g,'~$&').replace(/"/g,'""')+'"'; }
+function buildSizeSheet({ordered, R, has, logo, company, infoLine, footer, footerRight}){
+  const sh=newSheet('Size Breakdown'); sh.footer=footer; sh.footerRight=footerRight;
+  const plan=SIZE_DEFS.map(def=>{
+    const c=CAT[def.cat], ls=ordered.filter(l=>l.cat===def.cat);
+    const regColOf=k=>c.fields.find(f=>f.key===k).col;
+    const isNumCol=k=>!!FIELD_NUM[regColOf(k)];
+    const norm=(l,k)=> isNumCol(k)? (l.spec[k]===''||l.spec[k]==null?'':Number(l.spec[k])) : (l.spec[k]==null?'':String(l.spec[k]));
+    const rows=[...new Set(ls.map(l=>JSON.stringify(norm(l,def.rowKey))))].map(x=>JSON.parse(x)).sort(cmpVals);
+    const colsRaw=[...new Set(ls.map(l=>JSON.stringify(def.colKeys.map(k=>norm(l,k)))))].map(x=>JSON.parse(x));
+    colsRaw.sort((a,b)=>{ for(let i=0;i<a.length;i++){ const r=cmpVals(a[i],b[i]); if(r) return r; } return 0; });
+    return {def, c, ls, rows, cols:colsRaw, regColOf, norm};
+  });
+  const width=Math.max(5, ...plan.map(p=>1+p.cols.length+3+(p.def.lm?1:0)));
+  sh.cols=[24, ...Array(width-1).fill(15)];
+  sh.portrait=false;
+  brandHead(sh,'Drainage Stocktake: Size Breakdown',logo,company,infoLine);
+  const lc=colL(width-1);
+  let r=3;
+  const blankRow=()=>{ sh.heights[r]=8; r++; };
+  const fullBar=(text)=>{ put(sh,r,0,{v:text.toUpperCase(),s:S.bar}); for(let i=1;i<width;i++) put(sh,r,i,{v:'',s:S.bar}); sh.merges.push('A'+(r+1)+':'+lc+(r+1)); sh.heights[r]=20; r++; };
+  blankRow();
+  put(sh,r,0,{v:'Each figure is the quantity on site for that size, taken from the Full Stock Register. A dash means none recorded.',s:S.sub}); sh.merges.push('A'+(r+1)+':'+lc+(r+1)); r++;
+  plan.forEach(p=>{
+    const {def,c,ls,rows,cols,regColOf}=p;
+    blankRow(); fullBar(def.title+(def.unitNote?' ('+def.unitNote.toLowerCase()+')':''));
+    if(!ls.length){ put(sh,r,0,{v:'No '+c.name.toLowerCase()+' recorded',s:S.cell}); for(let i=1;i<width;i++) put(sh,r,i,{v:'',s:S.cell}); sh.merges.push('A'+(r+1)+':'+lc+(r+1)); r++; return; }
+    const heads=[def.rowHead, ...cols.map(def.colLabel), 'Total', 'Damaged', 'Quarantined'];
+    if(def.lm) heads.push('Linear Metres (m)');
+    heads.forEach((h,i)=>put(sh,r,i,{v:h,s:i===0?S.thead:S.theadC})); sh.heights[r]=32; r++;
+    const firstRow=r;
+    const qtyOf=(pred)=>ls.filter(pred).reduce((n,l)=>n+l.qty,0);
+    const rowCrit=(rv)=>R(regColOf(def.rowKey))+','+critOf(rv);
+    rows.forEach(rv=>{
+      put(sh,r,0,{v: rv===''?'Not specified':(typeof rv==='number'? rv+' mm' : String(rv)), s:S.label});
+      const inRow=l=>p.norm(l,def.rowKey)===rv;
+      cols.forEach((cv,ci)=>{
+        const crit=def.colKeys.map((k,i)=>R(regColOf(k))+','+critOf(cv[i])).join(',');
+        const v=qtyOf(l=>inRow(l)&&def.colKeys.every((k,i)=>p.norm(l,k)===cv[i]));
+        put(sh,r,1+ci,{f:'SUMIFS('+R('qty')+','+R('cat')+',"'+c.singular+'",'+rowCrit(rv)+','+crit+')', v, s:S.mx});
+      });
+      const tc=1+cols.length;
+      put(sh,r,tc,{f:'SUM('+colL(1)+(r+1)+':'+colL(tc-1)+(r+1)+')', v:qtyOf(inRow), s:S.mxTot});
+      ['Damaged','Quarantined'].forEach((cond,k)=>put(sh,r,tc+1+k,{f:'SUMIFS('+R('qty')+','+R('cat')+',"'+c.singular+'",'+rowCrit(rv)+','+R('cond')+',"'+cond+'")', v:qtyOf(l=>inRow(l)&&l.condition===cond), s:S.mx}));
+      if(def.lm){ const lmv=round2(ls.filter(inRow).reduce((n,l)=>n+(linearMetres(l)||0),0)); put(sh,r,tc+3,{f:'SUMIFS('+R('lm')+','+R('cat')+',"'+c.singular+'",'+rowCrit(rv)+')', v:lmv, s:S.dec}); }
+      for(let i=heads.length;i<width;i++) put(sh,r,i,{v:'',s:0});
+      r++;
+    });
+    put(sh,r,0,{v:'Total '+c.name.toLowerCase(),s:S.totLabel});
+    for(let i=1;i<heads.length;i++){
+      const isLm=def.lm&&i===heads.length-1;
+      const colVals=[]; for(let rr=firstRow; rr<r; rr++){ const cell=sh.rows[rr][i]; colVals.push(cell&&typeof cell.v==='number'?cell.v:0); }
+      put(sh,r,i,{f:'SUM('+colL(i)+(firstRow+1)+':'+colL(i)+r+')', v:isLm?round2(colVals.reduce((a,b)=>a+b,0)):colVals.reduce((a,b)=>a+b,0), s:isLm?S.totDec:S.mxSum});
+    }
+    r++;
+  });
+  if(!has){ /* nothing recorded at all: the per-category rows above already say so */ }
+  return sh;
 }
 
 /* Company logo: loaded from logo.png next to index.html (same folder in the GitHub repo). Optional. */
